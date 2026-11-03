@@ -1,4 +1,4 @@
-# Demo 3: autorreparación. Se elimina un pod mientras se envían peticiones sin parar.
+﻿# Demo 3: autorreparación. Se elimina un pod mientras se envían peticiones sin parar.
 param([int]$Seconds = 40)
 . "$PSScriptRoot\common.ps1"
 $log = Join-Path $Evidence "03_self_healing.txt"

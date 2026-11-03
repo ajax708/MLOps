@@ -1,4 +1,4 @@
-# Demo 4: escalado 3 -> 5 -> 3 réplicas
+﻿# Demo 4: escalado 3 -> 5 -> 3 réplicas
 param([int]$To = 5)
 . "$PSScriptRoot\common.ps1"
 $log = Join-Path $Evidence "04_scaling.txt"

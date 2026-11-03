@@ -1,4 +1,4 @@
-# Despliegue completo de cero: imágenes -> MLflow en K8s -> entrenamiento/registro -> API + UI
+﻿# Despliegue completo de cero: imágenes -> MLflow en K8s -> entrenamiento/registro -> API + UI
 # Uso: .\scripts\deploy.ps1            (-SkipTraining si el registry ya tiene @champion)
 param([switch]$SkipTraining)
 . "$PSScriptRoot\common.ps1"

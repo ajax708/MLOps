@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Continue"   # kubectl escribe avisos en stderr; no abortar por eso
+﻿$ErrorActionPreference = "Continue"   # kubectl escribe avisos en stderr; no abortar por eso
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $env:PYTHONIOENCODING = "utf-8"
 $Root = Split-Path -Parent $PSScriptRoot

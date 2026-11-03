@@ -1,4 +1,4 @@
-# Demo 1: 3 o más réplicas en estado Running simultáneamente
+﻿# Demo 1: 3 o más réplicas en estado Running simultáneamente
 . "$PSScriptRoot\common.ps1"
 $log = Join-Path $Evidence "01_replicas.txt"
 & {

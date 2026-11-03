@@ -1,4 +1,4 @@
-# Demo 2: peticiones sucesivas al Service son atendidas por pods distintos
+﻿# Demo 2: peticiones sucesivas al Service son atendidas por pods distintos
 param([int]$N = 30)
 . "$PSScriptRoot\common.ps1"
 $log = Join-Path $Evidence "02_load_balancing.txt"

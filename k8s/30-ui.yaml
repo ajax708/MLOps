@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: credit-ui
+  namespace: mlops
+  labels: {app: credit-ui}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: credit-ui}
+  template:
+    metadata:
+      labels: {app: credit-ui}
+    spec:
+      containers:
+        - name: ui
+          image: credit-ui:1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8501
+          env:
+            - name: API_URL
+              value: http://credit-api     # DNS del Service de la API dentro del clúster
+          readinessProbe:
+            httpGet: {path: /_stcore/health, port: 8501}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {cpu: 500m, memory: 256Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: credit-ui
+  namespace: mlops
+spec:
+  type: NodePort
+  selector: {app: credit-ui}
+  ports:
+    - port: 80
+      targetPort: 8501
+      nodePort: 30501          # http://localhost:30501

@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: credit-api
+  namespace: mlops
+  labels: {app: credit-api}
+spec:
+  replicas: 3
+  minReadySeconds: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0        # nunca baja de 3 pods listos durante una actualizacion
+  selector:
+    matchLabels: {app: credit-api}
+  template:
+    metadata:
+      labels: {app: credit-api}
+    spec:
+      containers:
+        - name: api
+          image: credit-api:1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: MLFLOW_TRACKING_URI
+              value: http://mlflow:5000
+            - name: MODEL_NAME
+              value: credit-default-classifier
+            - name: MODEL_ALIAS
+              value: champion          # el servicio consume el alias del Model Registry
+          # Readiness: no recibe trafico hasta tener el modelo en memoria
+          readinessProbe:
+            httpGet: {path: /ready, port: 8000}
+            initialDelaySeconds: 3
+            periodSeconds: 3
+            failureThreshold: 2
+          # Liveness: reinicia el contenedor si el proceso se cuelga
+          livenessProbe:
+            httpGet: {path: /health, port: 8000}
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          # requests = limits en memoria (recomendacion de clase: "la RAM no perdona")
+          resources:
+            requests: {cpu: 250m, memory: 768Mi}
+            limits: {cpu: 500m, memory: 768Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: credit-api
+  namespace: mlops
+spec:
+  type: NodePort
+  selector: {app: credit-api}
+  ports:
+    - port: 80
+      targetPort: 8000
+      nodePort: 30080          # http://localhost:30080

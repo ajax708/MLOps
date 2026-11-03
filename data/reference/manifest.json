@@ -1,0 +1,13 @@
+{
+  "seed": 42,
+  "raw_sha256": "264ae2fbbf48a27d8281cbcaa946b75b119f783f0d306d21cd3f4abb2e60ff69",
+  "train_rows": 18000,
+  "test_rows": 6000,
+  "production_pool_rows": 6000,
+  "train_default_rate": 0.2212,
+  "test_default_rate": 0.2212,
+  "production_pool_default_rate": 0.2212,
+  "train_sha256": "18a76458dbd71833346665696245deb55f8e9c9c83702cdd7446760a6a26af63",
+  "test_sha256": "158521a0141c83ff500a11c277a68be0d291ffe48312d184a1d083f9c6e21190",
+  "production_pool_sha256": "68ce20f5a824ec92b8f28f747426a2130e21f9aba3c68359f8a8c72a6276fdc0"
+}

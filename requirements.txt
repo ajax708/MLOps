@@ -1,0 +1,8 @@
+# Entorno de desarrollo / entrenamiento / pruebas de drift (Python 3.11)
+-r requirements/api.txt
+matplotlib==3.11.2
+xlrd==2.0.2
+requests==2.34.2
+pytest==9.2.0
+httpx==0.28.1
+streamlit==1.66.1

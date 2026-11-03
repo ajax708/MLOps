@@ -43,9 +43,10 @@ spec:
             httpGet: {path: /health, port: 5000}
             initialDelaySeconds: 30
             periodSeconds: 15
+          # 768Mi resultaba en OOMKilled (exit 137) con MLflow 3 + 2 workers: se mide y se sube.
           resources:
-            requests: {cpu: 250m, memory: 768Mi}
-            limits: {cpu: "1", memory: 768Mi}
+            requests: {cpu: 250m, memory: 2Gi}
+            limits: {cpu: "1", memory: 2Gi}
       volumes:
         - name: data
           persistentVolumeClaim:

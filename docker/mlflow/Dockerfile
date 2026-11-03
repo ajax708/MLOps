@@ -12,4 +12,4 @@ CMD ["mlflow", "server", \
      "--host", "0.0.0.0", "--port", "5000", "--workers", "2", \
      "--backend-store-uri", "sqlite:////mlflow/mlflow.db", \
      "--artifacts-destination", "/mlflow/artifacts", \
-     "--allowed-hosts", "mlflow,mlflow:*,mlflow.mlops.svc.cluster.local:*,localhost,localhost:*,127.0.0.1:*"]
+     "--allowed-hosts", "mlflow,mlflow:*,mlflow.mlops.svc.cluster.local:*,localhost,localhost:*,127.0.0.1:*,10.*,172.*,192.168.*"]

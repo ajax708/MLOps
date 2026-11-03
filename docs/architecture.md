@@ -48,9 +48,20 @@ Organizada en los tres pilares de MLOps vistos en clase:
 |---|---|
 | Registered model | `credit-default-classifier` |
 | Alias | `@champion` |
-| Versión | **{{VERSION}}** |
-| Run | **{{RUN_NAME}}** (`{{RUN_ID}}`) |
-| ROC-AUC test | **{{AUC}}** |
+| Versión | **3** |
+| Run | **`random_forest-n_estimators300-max_depthNone-min_samples_leaf20`** (`54686821fe33454380f75e216b40cea9`) |
+| ROC-AUC test | **0,7774** (F1 0,538) |
+
+Versiones del registry:
+
+| Versión | Origen | ROC-AUC test | Alias |
+|---|---|---|---|
+| v1 | mejor Regresión Logística (`C=0.1`) | 0,7558 | — |
+| v2 | mejor HistGradientBoosting (`lr=0.1, depth=3`) | 0,7754 | — |
+| **v3** | **mejor Random Forest (300 árboles, `min_samples_leaf=20`)** | **0,7774** | **@champion** |
+| v4 | reentrenamiento por concept drift ([`src/retrain.py`](../src/retrain.py)) | 0,808 en lotes recientes | @challenger |
+
+**Por qué v3:** tiene el mayor ROC-AUC de los 8 runs. Las diferencias con HistGB (0,775) y con RF de 200 árboles (0,777) son pequeñas. Se mantiene la regla objetiva de elegir el mayor ROC-AUC, que es la métrica principal, y no cambiarla después de ver los resultados. Además, `min_samples_leaf=20` regulariza el bosque frente al sobreajuste. Regresión Logística queda 2 puntos por debajo: la relación con el riesgo no es lineal (p. ej., meses de retraso en `PAY_*`).
 
 Se puede verificar en vivo con `GET http://localhost:30080/info`: el `run_id` que devuelve el pod es el mismo que aparece en la UI de MLflow.
 
@@ -71,7 +82,9 @@ Se puede verificar en vivo con `GET http://localhost:30080/info`: el `run_id` qu
 | livenessProbe `/health` | reinicia el contenedor si el proceso se cuelga |
 | resources | memoria `requests = limits = 512Mi` ("la RAM no perdona": se evita el OOMKill y el desalojo); CPU 250m → 500m |
 | `credit-api` Service | NodePort 30080; kube-proxy reparte las conexiones entre los pods listos |
-| `mlflow` | 1 réplica (SQLite + PVC ReadWriteOnce no admiten varias escrituras concurrentes) |
+| `mlflow` | 1 réplica (SQLite + PVC ReadWriteOnce no admiten varias escrituras concurrentes); memoria 2Gi |
+
+**Incidente real durante el despliegue ("la RAM no perdona"):** con un límite de 768Mi, el pod de MLflow 3 (2 workers) terminaba con **OOMKilled (exit 137)** y entraba en `CrashLoopBackOff`. Se diagnosticó con `kubectl describe pod` (`Last State: Terminated, Reason: OOMKilled`) y se subió a 2Gi con `requests = limits`. La API usa ~260 MiB medidos con `docker stats`, por eso tiene un límite de 768Mi, con margen para el pico de carga del modelo.
 
 **Sobre el balanceo:** kube-proxy balancea **por conexión TCP**, no por petición HTTP. Los scripts usan `-DisableKeepAlive` y la UI usa `Connection: close` para abrir una conexión nueva en cada petición. Con keep-alive, un mismo cliente se quedaría "pegado" a un pod.
 

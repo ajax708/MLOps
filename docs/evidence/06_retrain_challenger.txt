@@ -1,0 +1,9 @@
+﻿
+2026/11/03 16:40:14 WARNING mlflow.tracking._model_registry.fluent: Run with id f9e294980c214ef2af6e2c86513d8771 has 
+no artifacts at artifact path 'model', registering model based on models:/m-87f554aeaf3148f3a0698ae1648e00ab instead
+champion  v3: ROC-AUC lotes recientes = 0.6106
+challenger v4: ROC-AUC lotes recientes = 0.8079  (run f9e294980c214ef2af6e2c86513d8771, ventana reciente)
+(variante histórico+reciente, no registrada: 0.6836)
+El challenger gana. Ejecuta con --promote para moverlo a @champion.
+
+

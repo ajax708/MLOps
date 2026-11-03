@@ -1,0 +1,16 @@
+.venv
+.git
+.github
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.env
+data
+reports
+docs
+mlruns
+mlartifacts
+*.db
+tests
+k8s
+scripts

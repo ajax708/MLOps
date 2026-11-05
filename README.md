@@ -63,7 +63,7 @@ python -m venv .venv; .\.venv\Scripts\pip install -r requirements.txt
 |---|---|
 | [01_replicas.txt](docs/evidence/01_replicas.txt) | 3/3 pods Running; `/info` → `credit-default-classifier@champion` v3, run `54686821…` |
 | [02_load_balancing.txt](docs/evidence/02_load_balancing.txt) | 30 peticiones repartidas entre los 3 pods |
-| [03_self_healing.txt](docs/evidence/03_self_healing.txt) | pod eliminado → reemplazo automático; **150 peticiones OK, 0 fallidas** |
+| [03_self_healing.txt](docs/evidence/03_self_healing.txt) | pod eliminado → reemplazo automático; **157 peticiones OK, 0 fallidas** |
 | [04_scaling.txt](docs/evidence/04_scaling.txt) | 3 → 5 réplicas (tráfico en los 5 pods) → 3 |
 | [05_drift.txt](docs/evidence/05_drift.txt) / [05_concept_drift.png](docs/evidence/05_concept_drift.png) | data drift VERDE/ROJO, 0/200 falsas alarmas, alarma de concept drift en el lote 9, 8 tests OK |
 | [06_retrain_challenger.txt](docs/evidence/06_retrain_challenger.txt) | challenger v4: AUC 0,808 frente a 0,611 del champion en los lotes recientes |

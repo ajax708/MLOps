@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Credit Default MLOps</title>
+<style>
+  :root { --ink:#16202c; --soft:#5a6776; --line:#d9e0e7; --accent:#1f4e79; --tint:#eef3f8; --good:#23713f; --bad:#b3261e; --bg:#fff; }
+  * { box-sizing:border-box; margin:0; }
+  html, body { height:100%; background:#10161d; overflow:hidden; font-family:"Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif; color:var(--ink); }
+  #stage { position:absolute; left:50%; top:50%; width:1280px; height:720px; background:var(--bg); transform-origin:center; }
+  .slide { position:absolute; inset:0; padding:56px 72px 64px; display:none; flex-direction:column; }
+  .slide.on { display:flex; }
+  h1 { font-size:60px; line-height:1.1; color:var(--accent); font-weight:700; }
+  h2 { font-size:38px; line-height:1.2; color:var(--accent); font-weight:700; margin-bottom:30px; }
+  p, li { font-size:26px; line-height:1.4; }
+  ul { padding-left:30px; } li { margin-bottom:14px; }
+  .sub { font-size:28px; color:var(--soft); margin-top:22px; }
+  .small { font-size:20px; color:var(--soft); }
+  .center { justify-content:center; }
+  .grow { flex:1; min-height:0; }
+  table { border-collapse:collapse; width:100%; }
+  th, td { font-size:23px; padding:11px 16px; text-align:left; border-bottom:1px solid var(--line); }
+  th { color:var(--soft); font-weight:600; font-size:20px; }
+  tr.win td { background:var(--tint); font-weight:700; }
+  .num { font-variant-numeric:tabular-nums; }
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:36px; }
+  .box { background:var(--tint); border-radius:10px; padding:24px 28px; }
+  .box h3 { font-size:26px; color:var(--accent); margin-bottom:12px; }
+  .box p, .box li { font-size:23px; }
+  .big, .box p.big { font-size:64px; font-weight:700; color:var(--accent); line-height:1.1; }
+  .flow { display:flex; align-items:stretch; gap:8px; margin-bottom:24px; }
+  .flow div { flex:1; background:var(--tint); border-radius:8px; padding:16px 6px; text-align:center; font-size:21px; font-weight:600; color:var(--accent); }
+  .flow span { align-self:center; color:var(--soft); font-size:22px; }
+  .loop { font-size:24px; color:var(--bad); font-weight:600; text-align:center; }
+  code { font-family:Consolas, "Cascadia Mono", monospace; font-size:.92em; }
+  pre { font-family:Consolas, "Cascadia Mono", monospace; font-size:22px; line-height:1.45; background:#16202c; color:#e8eef4; padding:22px 26px; border-radius:10px; }
+  .demo { margin-top:auto; padding-top:14px; font-size:20px; color:var(--soft); }
+  .demo b { color:var(--accent); }
+  .ok { color:var(--good); font-weight:700; } .no { color:var(--bad); font-weight:700; }
+  img.fig { display:block; max-width:100%; max-height:430px; margin:0 auto; }
+  #count { position:fixed; right:18px; bottom:12px; color:#8fa0b1; font-size:15px; z-index:2; }
+  @media print {
+    @page { size:1280px 720px; margin:0; }
+    html, body { overflow:visible; height:auto; background:#fff; }
+    #stage { position:static; transform:none !important; height:auto; }
+    .slide { display:flex; position:relative; height:720px; page-break-after:always; }
+    #count { display:none; }
+  }
+</style>
+</head>
+<body>
+<main id="stage">
+
+<section class="slide center">
+  <h1>Riesgo de default de tarjeta de crédito</h1>
+  <p class="sub">Del experimento a producción con MLflow, Docker y Kubernetes</p>
+  <p class="sub">Luis Bryan Cueva Parada · Proyecto final de MLOps</p>
+</section>
+
+<section class="slide">
+  <h2>El problema: predecir quién no pagará el próximo mes</h2>
+  <div class="cols">
+    <div>
+      <ul>
+        <li>Dataset UCI <em>Default of Credit Card Clients</em></li>
+        <li>Clientes de un banco de Taiwán</li>
+        <li>23 variables: perfil, historial de pagos, facturas y pagos de 6 meses</li>
+      </ul>
+    </div>
+    <div class="box">
+      <p class="big">30.000</p><p>clientes</p><br>
+      <p class="big">22 %</p><p>cae en default: clases desbalanceadas</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <h2>El dataset: qué sabemos de cada cliente</h2>
+  <table>
+    <tr><th>Grupo</th><th>Qué contiene</th><th>Ejemplo</th></tr>
+    <tr><td>Perfil</td><td>Cupo, edad, sexo, educación y estado civil</td><td>Cupo de 120.000, 35 años</td></tr>
+    <tr><td>Historial de pagos</td><td>Si estuvo al día o atrasado en cada uno de los últimos 6 meses</td><td>0 = al día, 3 = 3 meses de atraso</td></tr>
+    <tr><td>Facturas</td><td>Cuánto le facturaron cada mes</td><td>40.000</td></tr>
+    <tr><td>Pagos</td><td>Cuánto pagó cada mes</td><td>2.000</td></tr>
+    <tr class="win"><td>A predecir</td><td><code>default</code>: ¿dejó de pagar el mes siguiente?</td><td>1 = no pagó, 0 = pagó</td></tr>
+  </table>
+  <p class="demo">Cada fila es un cliente. Son 23 variables de entrada y una a predecir. Montos en dólares taiwaneses (NT$).</p>
+</section>
+
+<section class="slide">
+  <h2>El ciclo: seguimos el camino del modelo</h2>
+  <div class="flow">
+    <div>Datos</div><span>→</span><div>Entrenar</div><span>→</span><div>Registrar</div><span>→</span><div>Docker</div><span>→</span><div>Kubernetes</div><span>→</span><div>API + UI</div><span>→</span><div>Monitoreo</div>
+  </div>
+  <p class="loop">Si el drift dispara la alarma → reentrenar → comparar → mover el alias</p>
+  <br>
+  <div class="cols">
+    <div class="box"><h3>Tres pilares</h3><p>Escalable, auditable y fiable</p></div>
+    <div class="box"><h3>Tres cosas versionadas</h3><p>Código en Git, datos con hashes, modelo en MLflow</p></div>
+  </div>
+</section>
+
+<section class="slide">
+  <h2>Datos: separación reproducible y auditable</h2>
+  <table>
+    <tr><th>Grupo</th><th>Filas</th><th>Uso</th><th>Default</th></tr>
+    <tr><td>Train</td><td class="num">18.000</td><td>Entrenar</td><td class="num">22,1 %</td></tr>
+    <tr><td>Test</td><td class="num">6.000</td><td>Evaluar</td><td class="num">22,1 %</td></tr>
+    <tr><td>Pool</td><td class="num">6.000</td><td>Simular producción y drift</td><td class="num">22,1 %</td></tr>
+  </table>
+  <br>
+  <ul>
+    <li>Semilla 42 y separación estratificada</li>
+    <li><code>manifest.json</code> guarda los hashes, y cada run los registra en MLflow</li>
+  </ul>
+  <p class="demo"><b>Mostrar:</b> <code>data/reference/manifest.json</code></p>
+</section>
+
+<section class="slide">
+  <h2>Experimentos: 8 runs comparados en MLflow</h2>
+  <table>
+    <tr><th>Mejor run de cada tipo</th><th>Runs</th><th>ROC-AUC</th></tr>
+    <tr class="win"><td>Random forest (300 árboles)</td><td class="num">3</td><td class="num">0,7774</td></tr>
+    <tr><td>Hist gradient boosting</td><td class="num">3</td><td class="num">0,7754</td></tr>
+    <tr><td>Regresión logística</td><td class="num">2</td><td class="num">0,7558</td></tr>
+  </table>
+  <p class="demo"><b>Mostrar:</b> MLflow → <code>credit-default-training</code>, ordenado por <code>roc_auc</code></p>
+</section>
+
+<section class="slide">
+  <h2>¿Cómo sabemos si el modelo es bueno? ROC-AUC</h2>
+  <div class="cols">
+    <div class="box">
+      <h3>Lo que necesita el banco</h3>
+      <p>Saber <b>a quién vigilar primero</b>: ordenar a los clientes de mayor a menor riesgo.</p><br>
+      <p>Dónde poner el corte para aprobar o rechazar es una decisión del negocio.</p>
+    </div>
+    <div class="box">
+      <h3>Lo que mide ROC-AUC</h3>
+      <p>Tomo un cliente que pagó y otro que no. ¿El modelo le da más riesgo al que no pagó?</p><br>
+      <p class="big">77,7 %</p>
+      <p>de esas parejas las ordena bien</p>
+      <p class="small">0,5 = azar · 1 = perfecto</p>
+    </div>
+  </div>
+  <p class="demo"><b>¿Por qué no contar aciertos?</b> Con 22 % de default, decir siempre «paga» acierta el 78 % sin detectar a nadie.</p>
+</section>
+
+<section class="slide">
+  <h2>Registry: el alias decide qué modelo va a producción</h2>
+  <table>
+    <tr><th>Versión</th><th>Modelo</th><th>Alias</th></tr>
+    <tr><td>v1</td><td>Regresión logística</td><td></td></tr>
+    <tr><td>v2</td><td>Hist gradient boosting</td><td></td></tr>
+    <tr class="win"><td>v3</td><td>Random forest</td><td><code>@champion</code></td></tr>
+    <tr><td>v4</td><td>Reentrenado por drift</td><td><code>@challenger</code></td></tr>
+  </table>
+  <br>
+  <p>La API pide <code>@champion</code>, nunca una ruta de archivo.</p>
+  <p class="demo"><b>Mostrar:</b> MLflow → Models, y <code>localhost:30080/info</code></p>
+</section>
+
+<section class="slide">
+  <h2>API y Docker: el modelo no va dentro de la imagen</h2>
+  <div class="cols">
+    <div class="box">
+      <h3>API (FastAPI)</h3>
+      <ul>
+        <li><code>/predict</code>: la predicción</li>
+        <li><code>/info</code>: qué modelo sirve</li>
+        <li><code>/health</code>: ¿está vivo?</li>
+        <li><code>/ready</code>: ¿ya cargó el modelo?</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>Imagen Docker</h3>
+      <ul>
+        <li>Solo código y dependencias</li>
+        <li>Carga <code>@champion</code> al arrancar</li>
+        <li>Cambiar de modelo no requiere reconstruir</li>
+      </ul>
+    </div>
+  </div>
+  <p class="demo"><b>Mostrar:</b> <code>Dockerfile</code> y <code>localhost:30080/docs</code></p>
+</section>
+
+<section class="slide">
+  <h2>Kubernetes: declaro el estado y él lo mantiene</h2>
+<pre>replicas: 3               # 3 copias de la API
+image: credit-api:1.0     # la imagen
+readinessProbe: /ready    # sin modelo, no recibe tráfico
+livenessProbe: /health    # si no responde, se reinicia
+memory: 768Mi             # requests = limits</pre>
+  <br>
+  <ul>
+    <li><b>Deployment:</b> mantiene las réplicas</li>
+    <li><b>Service:</b> dirección fija que reparte el tráfico</li>
+  </ul>
+  <p class="demo"><b>Mostrar:</b> <code>k8s/20-api.yaml</code> y <code>kubectl get pods -n mlops</code></p>
+</section>
+
+<section class="slide">
+  <h2>Demostraciones: los cuatro requisitos, medidos</h2>
+  <table>
+    <tr><th>Prueba</th><th>Resultado</th><th>Script</th></tr>
+    <tr><td>Réplicas</td><td>3/3 pods Running</td><td><code>demo_1</code></td></tr>
+    <tr><td>Balanceo</td><td>30 peticiones entre los 3 pods</td><td><code>demo_2</code></td></tr>
+    <tr><td>Self-healing</td><td>Pod borrado y reemplazado: 157 OK, 0 fallidas</td><td><code>demo_3</code></td></tr>
+    <tr><td>Escalado</td><td>3 → 5 → 3 réplicas</td><td><code>demo_4</code></td></tr>
+  </table>
+  <p class="demo"><b>En vivo:</b> <code>.\scripts\demo_3_self_healing.ps1</code></p>
+</section>
+
+<section class="slide">
+  <h2>Data drift: ¿cambiaron los clientes que llegan?</h2>
+  <div class="cols">
+    <div class="box">
+      <h3>Qué es</h3>
+      <p>El modelo aprendió con cierto tipo de cliente. Si ahora llegan, por ejemplo, clientes más jóvenes y con más cupo, ya no se parecen a los que conoce.</p><br>
+      <h3>Cómo se detecta</h3>
+      <p>Comparo cada variable contra los datos de entrenamiento: el cambio debe ser real (KS, Chi²) y grande (PSI).</p>
+    </div>
+    <div class="box">
+      <h3>Resultado</h3>
+      <p>Lote normal: <span class="ok">VERDE</span>, 0 variables</p><br>
+      <p>Lote alterado: <span class="no">ROJO</span>, 15 variables</p><br>
+      <p>200 lotes sanos: 0 falsas alarmas</p>
+    </div>
+  </div>
+  <p class="demo"><b>Acción:</b> vigilar · <b>En vivo:</b> <code>.\scripts\demo_5_drift.ps1</code></p>
+</section>
+
+<section class="slide">
+  <h2>Reentrenamiento: challenger contra champion</h2>
+  <p>Comparación en los lotes recientes, después del drift:</p><br>
+  <table>
+    <tr><th>Modelo</th><th>ROC-AUC reciente</th></tr>
+    <tr><td>Champion v3</td><td class="num">0,611</td></tr>
+    <tr class="win"><td>Challenger v4</td><td class="num">0,808</td></tr>
+  </table>
+  <br>
+  <p>Promover es una decisión humana: mover el alias y reiniciar los pods de forma gradual, sin reconstruir la imagen.</p>
+  <p class="demo"><b>Comando:</b> <code>kubectl rollout restart deployment/credit-api -n mlops</code></p>
+</section>
+
+<section class="slide center">
+  <h1>Conclusión</h1>
+  <p class="sub">El modelo no termina al entrenarlo: se registra, se despliega, se vigila y se reemplaza sin detener el servicio.</p>
+  <p class="sub">¿Preguntas?</p>
+</section>
+
+</main>
+<div id="count"></div>
+<script>
+  var stage = document.getElementById('stage');
+  var slides = document.querySelectorAll('.slide');
+  var count = document.getElementById('count');
+  var i = 0;
+  function start() {
+    var n = parseInt(location.hash.slice(1), 10);
+    return n >= 1 && n <= slides.length ? n - 1 : 0;
+  }
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function (s, k) { s.classList.toggle('on', k === i); });
+    count.textContent = (i + 1) + ' / ' + slides.length;
+    history.replaceState(null, '', '#' + (i + 1));
+  }
+  function fit() {
+    var s = Math.min(innerWidth / 1280, innerHeight / 720);
+    stage.style.transform = 'translate(-50%,-50%) scale(' + s + ')';
+  }
+  addEventListener('resize', fit);
+  addEventListener('keydown', function (e) {
+    if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].indexOf(e.key) > -1) { e.preventDefault(); show(i + 1); }
+    else if (['ArrowLeft', 'ArrowUp', 'PageUp'].indexOf(e.key) > -1) { e.preventDefault(); show(i - 1); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key === 'f' || e.key === 'F') {
+      if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen();
+    }
+  });
+  stage.addEventListener('click', function (e) { show(i + (e.clientX < innerWidth * 0.25 ? -1 : 1)); });
+  fit(); show(start());
+</script>
+</body>
+</html>

@@ -80,6 +80,9 @@
   .dark .stackline { margin-top:8px; font-family:var(--mono); font-size:15.5px; color:#8FB2C2; }
   .chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:26px; } .chips span { font-family:var(--mono); font-size:15px; padding:4px 10px; box-shadow:inset 0 0 0 1px #4C7C93; color:#DCE9F0; }
 
+  a { color:var(--teal); font-weight:600; }
+  .repo { font-family:var(--mono); font-size:20px; margin-top:8px; }
+  .dark a { color:#7FD3E8; }
   .report { display:none; }
   #count { position:fixed; right:14px; bottom:8px; color:#6B8494; font:13px var(--mono); z-index:2; }
   :focus-visible { outline:2px solid var(--teal); }
@@ -103,6 +106,7 @@
   <p class="sub">Del experimento a producción: un modelo registrado, desplegado en Kubernetes y vigilado frente al drift.</p>
   <div class="chips"><span>MLflow 3.17</span><span>scikit-learn</span><span>FastAPI</span><span>Docker</span><span>Kubernetes</span><span>Streamlit</span><span>GitHub Actions</span></div>
   <p class="who">Luis Bryan Cueva Parada · Proyecto final de MLOps</p>
+  <p class="repo"><a href="https://github.com/ajax708/MLOps" target="_blank" rel="noopener">github.com/ajax708/MLOps</a></p>
 </section>
 
 <section class="slide" data-s="0">
@@ -447,13 +451,14 @@ resources:
     <tr><td>Data drift y concept drift automáticos</td><td>Verde/rojo y alarma en el lote 9</td><td class="m">05_drift</td></tr>
     <tr><td>UI que consume la API (extra)</td><td>Streamlit dentro del clúster</td><td class="m">ui/app.py</td></tr>
   </table>
-  <p class="cap" style="margin-top:12px">Repositorio: <code>github.com/ajax708/MLOps</code></p>
+  <p class="cap" style="margin-top:12px">Repositorio: <a href="https://github.com/ajax708/MLOps" target="_blank" rel="noopener">github.com/ajax708/MLOps</a></p>
 </section>
 
 <section class="slide dark" data-s="6">
   <h1>Un modelo no termina al entrenarlo</h1>
   <p class="sub">Se registra, se despliega, se vigila y se reemplaza sin detener el servicio.</p>
-  <p class="who">¿Preguntas?</p>
+  <p class="repo" style="margin-top:28px">Repositorio: <a href="https://github.com/ajax708/MLOps" target="_blank" rel="noopener">github.com/ajax708/MLOps</a></p>
+  <p class="who" style="margin-top:18px">¿Preguntas?</p>
 </section>
 
 </main>
@@ -603,7 +608,7 @@ resources:
       if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen();
     }
   });
-  stage.addEventListener('click', function (e) { show(i + (e.clientX < innerWidth * 0.25 ? -1 : 1)); });
+  stage.addEventListener('click', function (e) { if (e.target.closest('a')) return; show(i + (e.clientX < innerWidth * 0.25 ? -1 : 1)); });
   var start = parseInt(location.hash.slice(1), 10);
   fit(); show(start >= 1 && start <= deck.length ? start - 1 : 0);
 })();

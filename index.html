@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RiskCard</title>
+<meta name="description" content="Crea un cliente de tarjeta de crédito y mira cómo tres modelos de machine learning estiman su riesgo de no pagar el próximo mes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="mark" aria-hidden="true"></span>RiskCard</div>
+  <nav class="tabs" role="tablist" aria-label="Secciones">
+    <button role="tab" id="tab-simulador" aria-controls="simulador" aria-selected="true">Simulador</button>
+    <button role="tab" id="tab-modelos" aria-controls="modelos" aria-selected="false">Comparar modelos</button>
+    <button role="tab" id="tab-datos" aria-controls="datos" aria-selected="false">Los datos</button>
+    <button role="tab" id="tab-reto" aria-controls="reto" aria-selected="false">¿Le ganas al modelo?</button>
+    <button role="tab" id="tab-proyecto" aria-controls="proyecto" aria-selected="false">Cómo se construyó</button>
+  </nav>
+</header>
+
+<main>
+  <section id="simulador" class="view" role="tabpanel" aria-labelledby="tab-simulador">
+    <div class="intro">
+      <h1>¿Este cliente pagará su tarjeta el próximo mes?</h1>
+      <p class="lede">Crea un cliente con los controles de la derecha. Tres modelos de machine learning estiman al instante su riesgo de no pagar.</p>
+      <div class="preset-row"><span>Prueba con un ejemplo:</span><div class="presets" id="presets" aria-label="Clientes de ejemplo"></div></div>
+    </div>
+    <div class="sim">
+      <div class="result">
+        <div class="stage" id="stage">
+          <article class="card" id="card" aria-live="polite">
+            <div class="card-top"><span class="card-brand">RiskCard</span><span class="card-band" id="cardBand">-</span></div>
+            <div class="chip" aria-hidden="true"></div>
+            <div class="card-score"><span id="cardScore">--</span><small>/100</small></div>
+            <div class="card-label">Riesgo de no pagar el próximo mes · <span id="cardModel">Random Forest</span></div>
+            <div class="card-use"><span id="cardUseBar"></span></div>
+            <div class="card-foot">
+              <div><small>Cliente</small><b id="cardHolder">-</b></div>
+              <div><small>Cupo</small><b id="cardLimit">-</b></div>
+              <div><small>Uso del cupo</small><b id="cardUse">-</b></div>
+            </div>
+          </article>
+        </div>
+        <div class="block">
+          <h2>Riesgo según cada modelo</h2>
+          <p class="hint">De 0 (muy bajo) a 100 (muy alto). Toca un modelo para verlo en la tarjeta.</p>
+          <div id="modelRows" class="model-rows"></div>
+        </div>
+        <div class="block">
+          <h2>Cómo podría bajar su riesgo</h2>
+          <p class="hint">Cambios que dependen del cliente, según el modelo elegido. No es un consejo financiero.</p>
+          <div id="plan"></div>
+        </div>
+        <div class="block">
+          <h2>Qué datos suben o bajan su riesgo</h2>
+          <p class="hint">Puntos de riesgo que aporta cada dato, comparado con un cliente típico.</p>
+          <div id="reasons"></div>
+        </div>
+      </div>
+
+      <form class="controls" id="controls" onsubmit="return false">
+        <fieldset>
+          <legend>1. Quién es el cliente</legend>
+          <label class="range"><span>Edad <output id="ageOut"></output></span><input type="range" id="age" min="21" max="79" step="1"></label>
+          <label class="range"><span>Cupo de crédito de la tarjeta <output id="limitOut"></output></span><input type="range" id="limit" min="10000" max="800000" step="10000"></label>
+          <div class="seg-row"><span>Género</span><div class="seg" id="gender"></div></div>
+          <div class="seg-row"><span>Estudios</span><div class="seg" id="education"></div></div>
+          <div class="seg-row"><span>Estado civil</span><div class="seg" id="marital"></div></div>
+        </fieldset>
+        <fieldset>
+          <legend>2. Cómo pagó en los últimos 6 meses</legend>
+          <div class="cal-tools">
+            <p class="hint">Toca una casilla por mes: el tiempo avanza hacia la derecha.</p>
+            <div>
+              <button type="button" class="ghost" id="allGood">Todos al día</button>
+              <button type="button" class="ghost" id="allLate">Todos con 2 meses de atraso</button>
+            </div>
+          </div>
+          <div class="calendar" id="calendar"></div>
+        </fieldset>
+        <fieldset>
+          <legend>3. Cuánto gasta y paga cada mes</legend>
+          <label class="range"><span>Factura mensual de la tarjeta <output id="billOut"></output></span><input type="range" id="bill" min="0" max="400000" step="1000"></label>
+          <label class="range"><span>Pago mensual a la tarjeta <output id="paidOut"></output></span><input type="range" id="paid" min="0" max="100000" step="500"></label>
+        </fieldset>
+      </form>
+    </div>
+    <div class="block wide map-block">
+      <div class="head-row"><h2>Mapa de riesgo: cómo ve cada modelo a este cliente</h2><div class="scale"><span>Riesgo bajo</span><i></i><span>Riesgo alto</span></div></div>
+      <p class="hint">Cada casilla es el mismo cliente con otro cupo y otro atraso en el último mes. El círculo blanco es tu cliente.</p>
+      <div id="maps" class="maps"></div>
+    </div>
+  </section>
+
+  <section id="modelos" class="view" role="tabpanel" aria-labelledby="tab-modelos" hidden>
+    <div class="intro"><h1>¿Qué modelo predice mejor quién no pagará?</h1><p class="lede">Random Forest, Gradient Boosting y Regresión logística aprendieron de los mismos 18.000 clientes. Aquí se ponen a prueba con otros 6.000 que nunca vieron.</p></div>
+    <div class="block wide">
+      <div class="head-row"><h2>El cliente que creaste, según cada modelo</h2><p id="agreement" class="hint"></p></div>
+      <div id="opinions" class="opinions"></div>
+    </div>
+    <div class="grid2">
+      <div class="block"><h2>¿Qué modelo distingue mejor a quienes no pagan?</h2><p class="hint">ROC-AUC va de 0,5 (adivinar, la diagonal) a 1 (perfecto). Cuanto más arriba va la curva, mejor.</p><div id="roc"></div></div>
+      <div class="block">
+        <h2>¿Cuándo debería el banco poner a un cliente en alerta?</h2>
+        <p class="hint">Elige desde qué nivel de riesgo se alerta. Si lo bajas, se detectan más morosos, pero también se alerta a más clientes que sí pagan.</p>
+        <label class="range"><span>Poner en alerta con riesgo de <output id="cutOut"></output></span><input type="range" id="cut" min="5" max="95" step="1" value="50"></label>
+        <p id="cutSummary" class="cut-summary"></p>
+        <div id="cutRows"></div>
+      </div>
+    </div>
+    <div class="block wide"><h2>¿Qué datos usa más cada modelo?</h2><p class="hint">Barra más larga: el modelo empeora más si esos datos se desordenan al azar.</p><div id="importance"></div></div>
+  </section>
+
+  <section id="reto" class="view" role="tabpanel" aria-labelledby="tab-reto" hidden>
+    <div class="intro"><h1>¿Predices mejor que el modelo?</h1><p class="lede">Son 10 clientes reales que el modelo nunca vio: 5 pagaron y 5 no. Mira sus datos y decide. Al final se comparan los aciertos.</p></div>
+    <div id="challenge" class="challenge"></div>
+  </section>
+
+  <section id="proyecto" class="view" role="tabpanel" aria-labelledby="tab-proyecto" hidden>
+    <div class="intro"><h1>De un modelo a un sistema, y de un sistema a esta app.</h1><p class="lede">RiskCard es la cara visible de un proyecto de MLOps completo: el modelo se registró, se desplegó, se vigiló y se llevó a la web.</p></div>
+    <div class="kpis">
+      <div class="kpi"><b>8</b><span>experimentos comparados en MLflow</span></div>
+      <div class="kpi"><b>3</b><span>réplicas en Kubernetes</span></div>
+      <div class="kpi"><b>157 / 0</b><span>peticiones correctas / fallidas al borrar un pod</span></div>
+      <div class="kpi"><b>6.000</b><span>predicciones verificadas en esta web</span></div>
+    </div>
+    <div class="block wide">
+      <h2>El camino del modelo</h2>
+      <ol class="journey">
+        <li><b>Datos</b><span>Separación 60/20/20 reproducible, con huellas SHA-256 para auditar cada archivo.</span><code>prepare_data.py</code></li>
+        <li><b>Experimentos</b><span>3 familias de modelos en MLflow, comparadas por ROC-AUC.</span><code>train.py</code></li>
+        <li><b>Registro</b><span>Versiones y alias: la API pide <code>@champion</code>, nunca un archivo.</span><code>register.py</code></li>
+        <li><b>Servicio</b><span>API con FastAPI en Docker. Cada respuesta dice qué modelo y qué pod respondieron.</span><code>Dockerfile</code></li>
+        <li><b>Kubernetes</b><span>3 réplicas, balanceo, escalado y recuperación automática.</span><code>k8s/</code></li>
+        <li><b>Monitoreo</b><span>Alarmas de data drift y concept drift, con reentrenamiento challenger.</span><code>src/drift/</code></li>
+        <li class="now"><b>RiskCard</b><span>Los modelos se exportaron a JSON y corren aquí, sin servidor.</span><code>web/</code></li>
+      </ol>
+    </div>
+    <div class="grid2">
+      <div class="block"><h2>Model Registry en Kubernetes</h2><img class="shot" src="img/registry.png" alt="Versiones del modelo en MLflow con los alias champion y challenger" loading="lazy"><p class="hint">Captura real del sistema, desplegado en un clúster local.</p></div>
+      <div class="block"><h2>La alarma que detectó la caída</h2><img class="shot" src="img/concept_drift.png" alt="ROC-AUC por lote: cae desde el lote 6 y la alarma salta en el lote 9" loading="lazy"><p class="hint">En una simulación, el modelo empeora desde el lote 6 y la alarma salta en el 9.</p></div>
+    </div>
+  </section>
+
+  <section id="datos" class="view" role="tabpanel" aria-labelledby="tab-datos" hidden>
+    <div class="intro"><h1>Lo que cuentan 30.000 clientes reales.</h1><p class="lede">De estos datos aprendieron los modelos. Impago significa no pagar el mes siguiente, y el historial de pagos lo anticipa mucho mejor que la edad.</p></div>
+    <div class="kpis" id="kpis"></div>
+    <div class="grid2" id="charts"></div>
+  </section>
+</main>
+
+<footer>
+  <p><b>Demo de portafolio.</b> Datos históricos de clientes de un banco de Taiwán (UCI), con montos en dólares taiwaneses. No sirve para decidir créditos reales. El riesgo de 0 a 100 ordena a los clientes; no es una probabilidad exacta.</p>
+  <p>Tus datos no salen de tu navegador: los modelos corren aquí mismo. <a href="https://github.com/ajax708/MLOps" target="_blank" rel="noopener">Ver el proyecto en GitHub</a> · Hecho por Luis Bryan Cueva Parada</p>
+</footer>
+<script type="module" src="app.js"></script>
+</body>
+</html>

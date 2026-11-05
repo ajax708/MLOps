@@ -5,46 +5,92 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Credit Default MLOps</title>
 <style>
-  :root { --ink:#16202c; --soft:#5a6776; --line:#d9e0e7; --accent:#1f4e79; --tint:#eef3f8; --good:#23713f; --bad:#b3261e; --bg:#fff; }
-  * { box-sizing:border-box; margin:0; }
-  html, body { height:100%; background:#10161d; overflow:hidden; font-family:"Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif; color:var(--ink); }
-  #stage { position:absolute; left:50%; top:50%; width:1280px; height:720px; background:var(--bg); transform-origin:center; }
-  .slide { position:absolute; inset:0; padding:56px 72px 64px; display:none; flex-direction:column; }
+  /* Concepto: cada diapositiva lleva arriba el riel del pipeline; indica en qué tramo del viaje del modelo estamos.
+     Las diapositivas .report solo aparecen en el PDF; .cue solo en la exposición. Sin dependencias externas. */
+  :root {
+    --ink:#0D1F2D; --soft:#4A5D6D; --faint:#7F92A1; --line:#DCE4EA; --mist:#F0F4F7; --paper:#FFFFFF;
+    --petrol:#0B3C53; --petrol2:#14536F; --teal:#0086A8; --orange:#C2570C; --violet:#6741D9;
+    --good:#1E7B45; --bad:#B3261E; --code:#0A2533; --codeink:#DCE9F0;
+    --display:"Bahnschrift","DIN Alternate","Segoe UI Semibold","Segoe UI",system-ui,sans-serif;
+    --body:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+    --mono:"Cascadia Mono","Cascadia Code",Consolas,"Courier New",monospace;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  html, body { height:100%; background:#061722; overflow:hidden; font-family:var(--body); color:var(--ink); }
+  #stage { position:absolute; left:50%; top:50%; width:1280px; height:720px; background:var(--paper); transform-origin:center; overflow:hidden; }
+
+  .slide { position:absolute; inset:0; display:none; flex-direction:column; padding:66px 64px 34px; background:var(--paper); overflow:hidden; }
   .slide.on { display:flex; }
-  h1 { font-size:60px; line-height:1.1; color:var(--accent); font-weight:700; }
-  h2 { font-size:38px; line-height:1.2; color:var(--accent); font-weight:700; margin-bottom:30px; }
-  p, li { font-size:26px; line-height:1.4; }
-  ul { padding-left:30px; } li { margin-bottom:14px; }
-  .sub { font-size:28px; color:var(--soft); margin-top:22px; }
-  .small { font-size:20px; color:var(--soft); }
-  .center { justify-content:center; }
-  .grow { flex:1; min-height:0; }
-  table { border-collapse:collapse; width:100%; }
-  th, td { font-size:23px; padding:11px 16px; text-align:left; border-bottom:1px solid var(--line); }
-  th { color:var(--soft); font-weight:600; font-size:20px; }
-  tr.win td { background:var(--tint); font-weight:700; }
-  .num { font-variant-numeric:tabular-nums; }
-  .cols { display:grid; grid-template-columns:1fr 1fr; gap:36px; }
-  .box { background:var(--tint); border-radius:10px; padding:24px 28px; }
-  .box h3 { font-size:26px; color:var(--accent); margin-bottom:12px; }
-  .box p, .box li { font-size:23px; }
-  .big, .box p.big { font-size:64px; font-weight:700; color:var(--accent); line-height:1.1; }
-  .flow { display:flex; align-items:stretch; gap:8px; margin-bottom:24px; }
-  .flow div { flex:1; background:var(--tint); border-radius:8px; padding:16px 6px; text-align:center; font-size:21px; font-weight:600; color:var(--accent); }
-  .flow span { align-self:center; color:var(--soft); font-size:22px; }
-  .loop { font-size:24px; color:var(--bad); font-weight:600; text-align:center; }
-  code { font-family:Consolas, "Cascadia Mono", monospace; font-size:.92em; }
-  pre { font-family:Consolas, "Cascadia Mono", monospace; font-size:22px; line-height:1.45; background:#16202c; color:#e8eef4; padding:22px 26px; border-radius:10px; }
-  .demo { margin-top:auto; padding-top:14px; font-size:20px; color:var(--soft); }
-  .demo b { color:var(--accent); }
+  .rail { position:absolute; left:64px; right:64px; top:22px; display:grid; grid-template-columns:repeat(6,1fr) 58px; gap:6px; align-items:end; }
+  .rail span { font-family:var(--display); font-size:13px; letter-spacing:.04em; color:var(--faint); border-top:4px solid var(--line); padding-top:5px; }
+  .rail span.done { border-color:#A9C6D3; color:var(--soft); }
+  .rail span.now { border-color:var(--teal); color:var(--petrol); font-weight:700; }
+  .pg { font-family:var(--mono); font-size:13px; color:var(--faint); text-align:right; }
+  .pg::after { content:attr(data-n); }
+
+  h1 { font-family:var(--display); font-size:68px; line-height:1.04; font-weight:700; letter-spacing:-.01em; text-wrap:balance; }
+  h2 { font-family:var(--display); font-size:38px; line-height:1.14; font-weight:700; color:var(--petrol); margin-bottom:6px; text-wrap:balance; }
+  .lead { font-size:21.5px; line-height:1.35; color:var(--soft); margin-bottom:20px; max-width:1100px; }
+  h3 { font-family:var(--display); font-size:23px; font-weight:700; color:var(--petrol); margin-bottom:6px; }
+  p, li { font-size:21px; line-height:1.38; }
+  ul { list-style:none; display:grid; gap:12px; }
+  li { padding-left:18px; position:relative; }
+  li::before { content:""; position:absolute; left:0; top:.55em; width:8px; height:8px; background:var(--teal); }
+  code, .m { font-family:var(--mono); font-size:.88em; }
+  b { font-weight:650; }
+  .body { flex:1; min-height:0; display:grid; gap:26px; align-items:start; align-content:center; }
+  .c2 { grid-template-columns:1fr 1fr; } .c3 { grid-template-columns:repeat(3,1fr); } .c4 { grid-template-columns:repeat(4,1fr); }
+  .c64 { grid-template-columns:1.5fr 1fr; } .c46 { grid-template-columns:1fr 1.5fr; }
+  .stack { display:flex; flex-direction:column; gap:14px; min-height:0; min-width:0; }
+  .panel { background:var(--mist); padding:18px 20px; min-width:0; }
+  .panel p, .panel li { font-size:20px; }
+  .kpi { font-family:var(--display); font-size:68px; line-height:1; font-weight:700; color:var(--petrol); }
+  .kpi small { font-size:26px; }
+  .cap { font-size:18px; color:var(--soft); line-height:1.3; }
+  .tag { display:inline-block; font-family:var(--mono); font-size:15px; padding:2px 8px; background:var(--petrol); color:#fff; }
+  .tag.alt { background:#fff; color:var(--petrol); box-shadow:inset 0 0 0 1.5px var(--petrol); }
   .ok { color:var(--good); font-weight:700; } .no { color:var(--bad); font-weight:700; }
-  img.fig { display:block; max-width:100%; max-height:430px; margin:0 auto; }
-  #count { position:fixed; right:18px; bottom:12px; color:#8fa0b1; font-size:15px; z-index:2; }
+  .cue { margin-top:auto; padding-top:10px; font-size:15.5px; color:var(--soft); }
+  .cue b { color:var(--teal); font-family:var(--display); letter-spacing:.03em; }
+  table { border-collapse:collapse; width:100%; }
+  th, td { font-size:19.5px; padding:10px 12px; text-align:left; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { font-family:var(--display); color:var(--soft); font-size:16.5px; font-weight:600; letter-spacing:.03em; border-bottom:2px solid var(--petrol); }
+  td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; }
+  tr.hi td { background:var(--mist); font-weight:650; }
+  pre { font-family:var(--mono); font-size:17.5px; line-height:1.5; background:var(--code); color:var(--codeink); padding:16px 18px; overflow:hidden; white-space:pre; }
+  pre i { font-style:normal; color:#6FC3DB; } pre u { text-decoration:none; color:#F2A65A; }
+  svg { display:block; width:100%; height:auto; }
+  svg text { font-family:var(--body); fill:var(--ink); font-size:14px; }
+  svg .lbl { fill:var(--soft); } svg .fnt { fill:var(--faint); font-size:12.5px; }
+  svg .disp { font-family:var(--display); font-weight:700; }
+  svg .mono { font-family:var(--mono); font-size:12.5px; fill:var(--soft); }
+  .split { display:flex; gap:2px; height:64px; }
+  .split div { display:flex; flex-direction:column; justify-content:center; padding:0 12px; color:#fff; font-family:var(--display); font-size:17px; line-height:1.1; }
+  .split small { font-size:13px; opacity:.9; font-family:var(--body); }
+  .flow { display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:4px; }
+  .flow > div { background:var(--mist); padding:12px 12px 12px 14px; position:relative; min-width:0; }
+  .flow b { display:block; font-family:var(--display); font-size:18.5px; color:var(--petrol); margin-bottom:3px; }
+  .flow .cap { font-size:16px; } .flow code { font-size:13px; color:var(--teal); display:block; margin-top:5px; word-break:break-all; }
+  .frame { box-shadow:0 0 0 1px var(--line); display:block; width:100%; }
+
+  .dark { background:var(--petrol); color:#fff; justify-content:center; padding:64px 84px; }
+  .dark h1 { color:#fff; } .dark .rail span { border-color:#2A5C74; color:#8FB2C2; } .dark .pg { color:#8FB2C2; }
+  .dark .sub { font-size:25px; line-height:1.35; color:#C8DCE6; margin-top:20px; max-width:940px; }
+  .dark .who { margin-top:40px; font-size:19px; color:#fff; }
+  .dark .stackline { margin-top:8px; font-family:var(--mono); font-size:15.5px; color:#8FB2C2; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:26px; } .chips span { font-family:var(--mono); font-size:15px; padding:4px 10px; box-shadow:inset 0 0 0 1px #4C7C93; color:#DCE9F0; }
+
+  .report { display:none; }
+  #count { position:fixed; right:14px; bottom:8px; color:#6B8494; font:13px var(--mono); z-index:2; }
+  :focus-visible { outline:2px solid var(--teal); }
   @media print {
     @page { size:1280px 720px; margin:0; }
     html, body { overflow:visible; height:auto; background:#fff; }
-    #stage { position:static; transform:none !important; height:auto; }
-    .slide { display:flex; position:relative; height:720px; page-break-after:always; }
+    #stage { position:static; transform:none !important; height:auto; overflow:visible; }
+    .slide, .slide.report { display:flex; position:relative; inset:auto; width:1280px; height:720px; break-after:page; }
+    .slide:last-child { break-after:auto; }
+    .pg::after { content:attr(data-p); }
+    .cue { display:none; }
     #count { display:none; }
   }
 </style>
@@ -52,220 +98,496 @@
 <body>
 <main id="stage">
 
-<section class="slide center">
+<section class="slide dark" data-s="-1">
   <h1>Riesgo de default de tarjeta de crédito</h1>
-  <p class="sub">Del experimento a producción con MLflow, Docker y Kubernetes</p>
-  <p class="sub">Luis Bryan Cueva Parada · Proyecto final de MLOps</p>
+  <p class="sub">Del experimento a producción: un modelo registrado, desplegado en Kubernetes y vigilado frente al drift.</p>
+  <div class="chips"><span>MLflow 3.17</span><span>scikit-learn</span><span>FastAPI</span><span>Docker</span><span>Kubernetes</span><span>Streamlit</span><span>GitHub Actions</span></div>
+  <p class="who">Luis Bryan Cueva Parada · Proyecto final de MLOps</p>
 </section>
 
-<section class="slide">
-  <h2>El problema: predecir quién no pagará el próximo mes</h2>
-  <div class="cols">
-    <div>
-      <ul>
-        <li>Dataset UCI <em>Default of Credit Card Clients</em></li>
-        <li>Clientes de un banco de Taiwán</li>
-        <li>23 variables: perfil, historial de pagos, facturas y pagos de 6 meses</li>
-      </ul>
-    </div>
-    <div class="box">
-      <p class="big">30.000</p><p>clientes</p><br>
-      <p class="big">22 %</p><p>cae en default: clases desbalanceadas</p>
-    </div>
+<section class="slide" data-s="0">
+  <h2>El problema: anticipar quién dejará de pagar</h2>
+  <p class="lead">Un modelo guardado en un cuaderno no ayuda a nadie. El reto es llevarlo a un servicio que escale, se pueda auditar y avise cuando empeora.</p>
+  <div class="body c3" style="grid-template-rows:auto auto">
+    <div class="panel"><div class="kpi">30.000</div><p class="cap">clientes de tarjeta de crédito de un banco de Taiwán</p></div>
+    <div class="panel"><div class="kpi">23</div><p class="cap">variables: perfil, pagos, facturas y abonos de 6 meses</p></div>
+    <div class="panel"><div class="kpi">22,1 <small>%</small></div><p class="cap">cae en default el mes siguiente: clases desbalanceadas</p></div>
+    <div class="stack"><h3>Escalable</h3><p>3 réplicas detrás de un balanceador, con escalado por comando.</p></div>
+    <div class="stack"><h3>Auditable</h3><p>Cada predicción dice qué modelo y qué pod respondieron.</p></div>
+    <div class="stack"><h3>Fiable</h3><p>Se recupera solo de caídas y detecta cuándo el modelo se degrada.</p></div>
   </div>
 </section>
 
-<section class="slide">
+<section class="slide" data-s="0">
   <h2>El dataset: qué sabemos de cada cliente</h2>
-  <table>
-    <tr><th>Grupo</th><th>Qué contiene</th><th>Ejemplo</th></tr>
-    <tr><td>Perfil</td><td>Cupo, edad, sexo, educación y estado civil</td><td>Cupo de 120.000, 35 años</td></tr>
-    <tr><td>Historial de pagos</td><td>Si estuvo al día o atrasado en cada uno de los últimos 6 meses</td><td>0 = al día, 3 = 3 meses de atraso</td></tr>
-    <tr><td>Facturas</td><td>Cuánto le facturaron cada mes</td><td>40.000</td></tr>
-    <tr><td>Pagos</td><td>Cuánto pagó cada mes</td><td>2.000</td></tr>
-    <tr class="win"><td>A predecir</td><td><code>default</code>: ¿dejó de pagar el mes siguiente?</td><td>1 = no pagó, 0 = pagó</td></tr>
-  </table>
-  <p class="demo">Cada fila es un cliente. Son 23 variables de entrada y una a predecir. Montos en dólares taiwaneses (NT$).</p>
-</section>
-
-<section class="slide">
-  <h2>El ciclo: seguimos el camino del modelo</h2>
-  <div class="flow">
-    <div>Datos</div><span>→</span><div>Entrenar</div><span>→</span><div>Registrar</div><span>→</span><div>Docker</div><span>→</span><div>Kubernetes</div><span>→</span><div>API + UI</div><span>→</span><div>Monitoreo</div>
+  <p class="lead">Cada fila es un cliente, con sus últimos 6 meses. Montos en dólares taiwaneses (NT$).</p>
+  <div class="body c64">
+    <table>
+      <tr><th>Grupo</th><th>Contenido</th><th>Variables</th></tr>
+      <tr><td><b>Perfil</b></td><td>Cupo, edad, sexo, educación, estado civil</td><td class="m">LIMIT_BAL, AGE…</td></tr>
+      <tr><td><b>Historial</b></td><td>Al día (−2 a 0) o meses de atraso (1 a 8)</td><td class="m">PAY_1…PAY_6</td></tr>
+      <tr><td><b>Facturas</b></td><td>Cuánto le facturaron cada mes</td><td class="m">BILL_AMT1…6</td></tr>
+      <tr><td><b>Pagos</b></td><td>Cuánto pagó cada mes</td><td class="m">PAY_AMT1…6</td></tr>
+      <tr class="hi"><td>A predecir</td><td>¿Deja de pagar el mes siguiente?</td><td class="m">default (1 = sí)</td></tr>
+    </table>
+    <div class="panel stack" style="gap:10px">
+      <h3>Un cliente de ejemplo</h3>
+      <p>Mujer de 35 años, universitaria, cupo de 120.000.</p>
+      <p>Al día los 6 meses. Facturas de unos 40.000 y pagos de unos 2.000.</p>
+      <p class="kpi" style="font-size:46px">20,8 %</p>
+      <p class="cap">de riesgo según el modelo: <b>PAGA</b></p>
+    </div>
   </div>
-  <p class="loop">Si el drift dispara la alarma → reentrenar → comparar → mover el alias</p>
-  <br>
-  <div class="cols">
-    <div class="box"><h3>Tres pilares</h3><p>Escalable, auditable y fiable</p></div>
-    <div class="box"><h3>Tres cosas versionadas</h3><p>Código en Git, datos con hashes, modelo en MLflow</p></div>
+  <div style="margin-top:14px"><div class="split"><div style="flex:77.88;background:var(--petrol)">77,9 % paga</div><div style="flex:22.12;background:var(--orange)">22,1 % default</div></div></div>
+</section>
+
+<section class="slide" data-s="-1">
+  <h2>La arquitectura: dónde vive cada pieza</h2>
+  <p class="lead">Todo corre en un clúster local de Kubernetes, en el namespace <code>mlops</code>. El modelo se guarda en MLflow y la API lo pide por su alias.</p>
+  <div id="arch" class="body"></div>
+</section>
+
+<section class="slide" data-s="-1">
+  <h2>El ciclo: cada etapa es un paso ejecutable</h2>
+  <p class="lead">El proceso no vive en un cuaderno: son scripts y manifiestos versionados en Git.</p>
+  <div class="body" style="grid-template-rows:auto auto auto">
+    <div class="flow">
+      <div><b>Datos</b><p class="cap">Limpiar y separar</p><code>prepare_data.py</code></div>
+      <div><b>Entrenar</b><p class="cap">8 runs en MLflow</p><code>train.py</code></div>
+      <div><b>Registrar</b><p class="cap">Versiones y alias</p><code>register.py</code></div>
+      <div><b>Empaquetar</b><p class="cap">3 imágenes</p><code>Dockerfile</code></div>
+      <div><b>Desplegar</b><p class="cap">3 réplicas</p><code>k8s/*.yaml</code></div>
+      <div><b>Servir</b><p class="cap">API y UI</p><code>api/main.py</code></div>
+      <div><b>Vigilar</b><p class="cap">Dos alarmas</p><code>drift/*.py</code></div>
+    </div>
+    <div class="flow" style="grid-template-columns:1fr">
+      <div style="background:var(--petrol)"><b style="color:#fff">Y el ciclo se cierra</b><p class="cap" style="color:#DCE9F0;font-size:17px">Si salta la alarma de concept drift → <code style="display:inline;color:#F2A65A;font-size:15px">retrain.py</code> entrena un challenger → se compara con el champion → una persona decide si mueve el alias.</p></div>
+    </div>
+    <div class="c3" style="display:grid;gap:20px;align-self:start">
+      <div><h3>Código</h3><p class="cap">Git y CI en GitHub Actions</p></div>
+      <div><h3>Datos</h3><p class="cap">Hashes SHA-256 en <code>manifest.json</code></p></div>
+      <div><h3>Modelo</h3><p class="cap">Versiones en el Model Registry</p></div>
+    </div>
   </div>
+  <p class="cue"><b>EN VIVO</b> &nbsp;<code>.\scripts\deploy.ps1 -SkipTraining</code> despliega todo sin reentrenar</p>
 </section>
 
-<section class="slide">
-  <h2>Datos: separación reproducible y auditable</h2>
-  <table>
-    <tr><th>Grupo</th><th>Filas</th><th>Uso</th><th>Default</th></tr>
-    <tr><td>Train</td><td class="num">18.000</td><td>Entrenar</td><td class="num">22,1 %</td></tr>
-    <tr><td>Test</td><td class="num">6.000</td><td>Evaluar</td><td class="num">22,1 %</td></tr>
-    <tr><td>Pool</td><td class="num">6.000</td><td>Simular producción y drift</td><td class="num">22,1 %</td></tr>
-  </table>
-  <br>
-  <ul>
-    <li>Semilla 42 y separación estratificada</li>
-    <li><code>manifest.json</code> guarda los hashes, y cada run los registra en MLflow</li>
-  </ul>
-  <p class="demo"><b>Mostrar:</b> <code>data/reference/manifest.json</code></p>
+<section class="slide" data-s="0">
+  <h2>Datos: una separación reproducible y auditable</h2>
+  <p class="lead">Los tres grupos conservan la misma proporción de default, y siempre salen iguales gracias a la semilla.</p>
+  <div class="split" style="height:92px;margin-bottom:22px">
+    <div style="flex:60;background:var(--petrol)">Train · 18.000<small>Entrena el modelo y es la referencia del drift</small></div>
+    <div style="flex:20;background:var(--petrol2)">Test · 6.000<small>Evalúa los modelos</small></div>
+    <div style="flex:20;background:var(--teal)">Pool · 6.000<small>Simula producción</small></div>
+  </div>
+  <div class="body c2">
+    <ul>
+      <li><b>Estratificada:</b> 22,1 % de default en los tres grupos.</li>
+      <li><b>Semilla 42:</b> la misma separación en cualquier máquina.</li>
+      <li><b>Hashes SHA-256:</b> si cambia un dato, cambia la huella.</li>
+      <li><b>Comprobado en CI:</b> GitHub regenera la separación y compara.</li>
+    </ul>
+<pre>{
+  <i>"seed"</i>: 42,
+  <i>"train_rows"</i>: 18000,
+  <i>"train_default_rate"</i>: 0.2212,
+  <i>"train_sha256"</i>: "18a76458dbd7…",
+  <i>"test_sha256"</i>:  "158521a0141c…"
+}</pre>
+  </div>
+  <p class="cue"><b>MOSTRAR</b> &nbsp;<code>data/reference/manifest.json</code></p>
 </section>
 
-<section class="slide">
-  <h2>Experimentos: 8 runs comparados en MLflow</h2>
-  <table>
-    <tr><th>Mejor run de cada tipo</th><th>Runs</th><th>ROC-AUC</th></tr>
-    <tr class="win"><td>Random forest (300 árboles)</td><td class="num">3</td><td class="num">0,7774</td></tr>
-    <tr><td>Hist gradient boosting</td><td class="num">3</td><td class="num">0,7754</td></tr>
-    <tr><td>Regresión logística</td><td class="num">2</td><td class="num">0,7558</td></tr>
-  </table>
-  <p class="demo"><b>Mostrar:</b> MLflow → <code>credit-default-training</code>, ordenado por <code>roc_auc</code></p>
+<section class="slide" data-s="1">
+  <h2>Experimentos: 8 runs, 3 tipos de modelo</h2>
+  <p class="lead">MLflow guarda de cada run sus parámetros, métricas, datos y commit. Ganó un random forest de 300 árboles.</p>
+  <div class="body" style="grid-template-columns:1.72fr 1fr">
+    <div id="runs"></div>
+    <div class="stack">
+      <h3>El champion, en detalle</h3>
+      <table>
+        <tr><th>Métrica</th><th class="n">Valor</th></tr>
+        <tr class="hi"><td>ROC-AUC</td><td class="n">0,777</td></tr>
+        <tr><td>Recall</td><td class="n">0,594</td></tr>
+        <tr><td>Precision</td><td class="n">0,492</td></tr>
+        <tr><td>F1</td><td class="n">0,538</td></tr>
+        <tr><td>Accuracy</td><td class="n">0,774</td></tr>
+      </table>
+      <p class="cap">Con umbral 0,5, detecta el 59 % de los morosos. Clases compensadas con <code>class_weight</code>.</p>
+    </div>
+  </div>
+  <p class="cue"><b>MOSTRAR</b> &nbsp;MLflow → <code>credit-default-training</code>, ordenado por <code>roc_auc</code></p>
 </section>
 
-<section class="slide">
+<section class="slide" data-s="1">
   <h2>¿Cómo sabemos si el modelo es bueno? ROC-AUC</h2>
-  <div class="cols">
-    <div class="box">
-      <h3>Lo que necesita el banco</h3>
-      <p>Saber <b>a quién vigilar primero</b>: ordenar a los clientes de mayor a menor riesgo.</p><br>
-      <p>Dónde poner el corte para aprobar o rechazar es una decisión del negocio.</p>
+  <p class="lead">El banco necesita saber a quién vigilar primero: ordenar a los clientes de mayor a menor riesgo. Esa es la métrica que elegí.</p>
+  <div class="body c2">
+    <div class="stack">
+      <div class="panel stack">
+        <h3>Qué mide</h3>
+        <p>Tomo un cliente que pagó y otro que no. ¿El modelo le da más riesgo al que no pagó?</p>
+        <div class="kpi">77,7 <small>% de las parejas</small></div>
+      </div>
+      <div id="gauge"></div>
     </div>
-    <div class="box">
-      <h3>Lo que mide ROC-AUC</h3>
-      <p>Tomo un cliente que pagó y otro que no. ¿El modelo le da más riesgo al que no pagó?</p><br>
-      <p class="big">77,7 %</p>
-      <p>de esas parejas las ordena bien</p>
-      <p class="small">0,5 = azar · 1 = perfecto</p>
-    </div>
-  </div>
-  <p class="demo"><b>¿Por qué no contar aciertos?</b> Con 22 % de default, decir siempre «paga» acierta el 78 % sin detectar a nadie.</p>
-</section>
-
-<section class="slide">
-  <h2>Registry: el alias decide qué modelo va a producción</h2>
-  <table>
-    <tr><th>Versión</th><th>Modelo</th><th>Alias</th></tr>
-    <tr><td>v1</td><td>Regresión logística</td><td></td></tr>
-    <tr><td>v2</td><td>Hist gradient boosting</td><td></td></tr>
-    <tr class="win"><td>v3</td><td>Random forest</td><td><code>@champion</code></td></tr>
-    <tr><td>v4</td><td>Reentrenado por drift</td><td><code>@challenger</code></td></tr>
-  </table>
-  <br>
-  <p>La API pide <code>@champion</code>, nunca una ruta de archivo.</p>
-  <p class="demo"><b>Mostrar:</b> MLflow → Models, y <code>localhost:30080/info</code></p>
-</section>
-
-<section class="slide">
-  <h2>API y Docker: el modelo no va dentro de la imagen</h2>
-  <div class="cols">
-    <div class="box">
-      <h3>API (FastAPI)</h3>
-      <ul>
-        <li><code>/predict</code>: la predicción</li>
-        <li><code>/info</code>: qué modelo sirve</li>
-        <li><code>/health</code>: ¿está vivo?</li>
-        <li><code>/ready</code>: ¿ya cargó el modelo?</li>
-      </ul>
-    </div>
-    <div class="box">
-      <h3>Imagen Docker</h3>
-      <ul>
-        <li>Solo código y dependencias</li>
-        <li>Carga <code>@champion</code> al arrancar</li>
-        <li>Cambiar de modelo no requiere reconstruir</li>
-      </ul>
+    <div class="stack">
+      <h3>Por qué no contar aciertos</h3>
+      <table>
+        <tr><th>Estrategia</th><th class="n">Accuracy</th><th class="n">Morosos detectados</th></tr>
+        <tr><td>Decir siempre «paga»</td><td class="n">77,9 %</td><td class="n">0 %</td></tr>
+        <tr class="hi"><td>Nuestro modelo</td><td class="n">77,4 %</td><td class="n">59 %</td></tr>
+      </table>
+      <p>Con clases desbalanceadas, accuracy premia ignorar a los morosos.</p>
+      <p>ROC-AUC tampoco depende del umbral: dónde poner el corte lo decide el negocio.</p>
     </div>
   </div>
-  <p class="demo"><b>Mostrar:</b> <code>Dockerfile</code> y <code>localhost:30080/docs</code></p>
 </section>
 
-<section class="slide">
+<section class="slide" data-s="2">
+  <h2>Registry: el alias decide qué va a producción</h2>
+  <p class="lead">Cada versión queda ligada a su run. La API pide <code>@champion</code>, nunca una ruta de archivo.</p>
+  <div class="body c64">
+    <div><img class="frame" src="evidence/07_mlflow_registry.png" alt="Model Registry de MLflow con las versiones 1 a 4 y los alias champion y challenger"><p class="cap" style="margin-top:6px">Captura real del Model Registry en el clúster.</p></div>
+    <div class="stack">
+      <div><span class="tag">@champion</span> <b>v3</b><p class="cap">Random forest. Es el que está en producción.</p></div>
+      <div><span class="tag alt">@challenger</span> <b>v4</b><p class="cap">Reentrenado tras el drift. Candidato, sin promover.</p></div>
+      <div class="panel stack" style="gap:6px;margin-top:6px">
+        <h3>Cambiar de modelo</h3>
+        <p>1. Mover el alias a la versión nueva.</p>
+        <p>2. Reiniciar los pods de forma gradual.</p>
+        <p>Sin reconstruir la imagen ni cortar el servicio.</p>
+      </div>
+    </div>
+  </div>
+  <p class="cue"><b>MOSTRAR</b> &nbsp;<code>localhost:30500</code> → Models &nbsp;·&nbsp; <code>localhost:30080/info</code></p>
+</section>
+
+<section class="slide" data-s="3">
+  <h2>API: el modelo convertido en servicio</h2>
+  <p class="lead">FastAPI recibe los datos, los valida y responde con la predicción y su trazabilidad.</p>
+  <div class="body c2">
+    <div class="stack">
+      <table>
+        <tr><th>Endpoint</th><th>Para qué</th></tr>
+        <tr><td class="m">POST /predict</td><td>Predicción, hasta 1.000 clientes</td></tr>
+        <tr><td class="m">GET /info</td><td>Modelo, versión y run servidos</td></tr>
+        <tr><td class="m">GET /ready</td><td>¿Ya cargó el modelo? (readiness)</td></tr>
+        <tr><td class="m">GET /health</td><td>¿Está vivo? (liveness)</td></tr>
+      </table>
+      <p><b>Validación:</b> un dato inválido, como edad 15, recibe un error <code>422</code> y nunca llega al modelo.</p>
+    </div>
+<pre><i>"predictions"</i>: [{
+  <i>"default_probability"</i>: <u>0.208</u>,
+  <i>"prediction"</i>: 0,
+  <i>"label"</i>: <u>"PAGA"</u>
+}],
+<i>"pod_name"</i>: "credit-api-5668f65d99-q54gt",
+<i>"model_alias"</i>: "champion",
+<i>"model_version"</i>: "3",
+<i>"run_id"</i>: "54686821fe33…"</pre>
+  </div>
+  <p class="cue"><b>EN VIVO</b> &nbsp;<code>localhost:30080/docs</code></p>
+</section>
+
+<section class="slide" data-s="3">
+  <h2>Docker: el modelo no va dentro de la imagen</h2>
+  <p class="lead">La imagen lleva código y dependencias. El modelo llega de MLflow al arrancar, así código y modelo cambian por separado.</p>
+  <div class="body c2">
+<pre><u># Misma versión que al entrenar</u>
+<i>FROM</i> python:3.11-slim
+
+<u># Dependencias primero: esta capa se cachea</u>
+<i>COPY</i> requirements/api.txt requirements.txt
+<i>RUN</i>  pip install -r requirements.txt
+
+<u># Solo el código de la API</u>
+<i>COPY</i> src/api ./api
+
+<u># Sin privilegios</u>
+<i>USER</i> appuser
+<i>CMD</i>  ["uvicorn", "api.main:app", ...]</pre>
+    <div class="stack">
+      <table>
+        <tr><th>Imagen</th><th>Contiene</th></tr>
+        <tr><td class="m">credit-api:1.0</td><td>La API</td></tr>
+        <tr><td class="m">mlflow-server:3.17.2</td><td>Tracking y Registry</td></tr>
+        <tr><td class="m">credit-ui:1.0</td><td>La interfaz</td></tr>
+      </table>
+      <ul>
+        <li><code>.dockerignore</code> deja fuera datos, secretos y <code>mlruns</code>.</li>
+        <li>Reproducible: las 3 se construyen también en el CI.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="cue"><b>MOSTRAR</b> &nbsp;<code>Dockerfile</code> y <code>.dockerignore</code></p>
+</section>
+
+<section class="slide" data-s="4">
   <h2>Kubernetes: declaro el estado y él lo mantiene</h2>
-<pre>replicas: 3               # 3 copias de la API
-image: credit-api:1.0     # la imagen
-readinessProbe: /ready    # sin modelo, no recibe tráfico
-livenessProbe: /health    # si no responde, se reinicia
-memory: 768Mi             # requests = limits</pre>
-  <br>
-  <ul>
-    <li><b>Deployment:</b> mantiene las réplicas</li>
-    <li><b>Service:</b> dirección fija que reparte el tráfico</li>
-  </ul>
-  <p class="demo"><b>Mostrar:</b> <code>k8s/20-api.yaml</code> y <code>kubectl get pods -n mlops</code></p>
-</section>
-
-<section class="slide">
-  <h2>Demostraciones: los cuatro requisitos, medidos</h2>
-  <table>
-    <tr><th>Prueba</th><th>Resultado</th><th>Script</th></tr>
-    <tr><td>Réplicas</td><td>3/3 pods Running</td><td><code>demo_1</code></td></tr>
-    <tr><td>Balanceo</td><td>30 peticiones entre los 3 pods</td><td><code>demo_2</code></td></tr>
-    <tr><td>Self-healing</td><td>Pod borrado y reemplazado: 157 OK, 0 fallidas</td><td><code>demo_3</code></td></tr>
-    <tr><td>Escalado</td><td>3 → 5 → 3 réplicas</td><td><code>demo_4</code></td></tr>
-  </table>
-  <p class="demo"><b>En vivo:</b> <code>.\scripts\demo_3_self_healing.ps1</code></p>
-</section>
-
-<section class="slide">
-  <h2>Data drift: ¿cambiaron los clientes que llegan?</h2>
-  <div class="cols">
-    <div class="box">
-      <h3>Qué es</h3>
-      <p>El modelo aprendió con cierto tipo de cliente. Si ahora llegan, por ejemplo, clientes más jóvenes y con más cupo, ya no se parecen a los que conoce.</p><br>
-      <h3>Cómo se detecta</h3>
-      <p>Comparo cada variable contra los datos de entrenamiento: el cambio debe ser real (KS, Chi²) y grande (PSI).</p>
-    </div>
-    <div class="box">
-      <h3>Resultado</h3>
-      <p>Lote normal: <span class="ok">VERDE</span>, 0 variables</p><br>
-      <p>Lote alterado: <span class="no">ROJO</span>, 15 variables</p><br>
-      <p>200 lotes sanos: 0 falsas alarmas</p>
+  <p class="lead">No doy pasos: pido 3 réplicas sanas. Si la realidad cambia, Kubernetes la corrige.</p>
+  <div class="body c2">
+<pre>replicas: <u>3</u>
+strategy:
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: <u>0</u>   <i># siempre 3 listos</i>
+readinessProbe: <u>/ready</u>   <i># sin modelo, no recibe</i>
+livenessProbe:  <u>/health</u>  <i># sin respuesta, reinicia</i>
+resources:
+  requests: {cpu: 250m, memory: 768Mi}
+  limits:   {cpu: 500m, memory: 768Mi}</pre>
+    <div class="stack">
+      <table>
+        <tr><th>Objeto</th><th>Qué hace</th></tr>
+        <tr><td><b>Deployment</b></td><td>Mantiene las réplicas</td></tr>
+        <tr><td><b>Service</b></td><td>Dirección fija que reparte el tráfico</td></tr>
+        <tr><td><b>PVC</b></td><td>Disco persistente de MLflow</td></tr>
+      </table>
+      <div class="panel"><h3>Un incidente real</h3><p>MLflow moría con 768Mi (<code>OOMKilled</code>, código 137). Lo medí y lo subí a 2Gi: la CPU perdona, la RAM no.</p></div>
     </div>
   </div>
-  <p class="demo"><b>Acción:</b> vigilar · <b>En vivo:</b> <code>.\scripts\demo_5_drift.ps1</code></p>
+  <p class="cue"><b>MOSTRAR</b> &nbsp;<code>k8s/20-api.yaml</code> &nbsp;·&nbsp; <code>kubectl get pods -n mlops</code></p>
 </section>
 
-<section class="slide">
+<section class="slide" data-s="4">
+  <h2>Demostraciones: los cuatro requisitos, medidos</h2>
+  <p class="lead">Cada resultado sale de un script repetible que guarda su evidencia en <code>docs/evidence/</code>.</p>
+  <div class="body c4" style="align-items:stretch">
+    <div class="panel stack"><h3>Réplicas</h3><div class="kpi">3/3</div><p class="cap">pods en Running, sirviendo <code>@champion</code> v3</p><code class="cap">demo_1</code></div>
+    <div class="panel stack"><h3>Balanceo</h3><div id="lb"></div><p class="cap">30 peticiones repartidas entre los 3 pods</p><code class="cap">demo_2</code></div>
+    <div class="panel stack"><h3>Self-healing</h3><div class="kpi">157<small> / 0</small></div><p class="cap">correctas / fallidas, con un pod borrado en pleno tráfico</p><code class="cap">demo_3</code></div>
+    <div class="panel stack"><h3>Escalado</h3><div class="kpi" style="font-size:56px;line-height:68px">3→5→3</div><p class="cap">réplicas; con 5, el tráfico llegó a los 5 pods</p><code class="cap">demo_4</code></div>
+  </div>
+  <p class="cap" style="margin-top:16px">El Service balancea por conexión, por eso las demos abren una conexión nueva en cada petición.</p>
+  <p class="cue"><b>EN VIVO</b> &nbsp;<code>.\scripts\demo_1_replicas.ps1</code> a <code>demo_4_scaling.ps1</code></p>
+</section>
+
+<section class="slide" data-s="5">
+  <h2>Data drift: ¿cambiaron los clientes que llegan?</h2>
+  <p class="lead">Comparo cada variable contra los datos de entrenamiento. Salta si el cambio es real (KS, Chi²) y grande (PSI ≥ 0,10).</p>
+  <div class="body c46">
+    <div class="stack">
+      <table>
+        <tr><th>Escenario</th><th>Resultado</th></tr>
+        <tr><td>Lote normal</td><td><span class="ok">VERDE</span>: 0 variables</td></tr>
+        <tr><td>Lote alterado</td><td><span class="no">ROJO</span>: 15 de 23</td></tr>
+        <tr><td>200 lotes sanos</td><td>0 falsas alarmas</td></tr>
+      </table>
+      <p>El lote alterado simula clientes más jóvenes, más cupo y montos más altos.</p>
+      <p><b>Acción:</b> vigilar. Que los clientes cambien no significa aún que el modelo falle.</p>
+    </div>
+    <div id="psi"></div>
+  </div>
+  <p class="cue"><b>EN VIVO</b> &nbsp;<code>.\scripts\demo_5_drift.ps1</code></p>
+</section>
+
+<section class="slide report" data-s="5">
+  <h2>Concept drift: ¿el modelo sigue acertando?</h2>
+  <p class="lead">Simulación de 12 lotes de 500 clientes. Desde el lote 6, clientes que parecían sanos dejan de pagar.</p>
+  <div class="body c64">
+    <div id="concept"></div>
+    <div class="stack">
+      <div class="panel"><div class="kpi">Lote 9</div><p class="cap">salta la alarma: 3 lotes seguidos bajo el umbral</p></div>
+      <p>El umbral (0,70) es el ROC-AUC normal menos 3 desviaciones.</p>
+      <p>Los datos de entrada no cambiaron: el data drift siguió en <span class="ok">VERDE</span> en los 12 lotes.</p>
+      <p><b>Acción:</b> reentrenar.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-s="5">
   <h2>Reentrenamiento: challenger contra champion</h2>
-  <p>Comparación en los lotes recientes, después del drift:</p><br>
-  <table>
-    <tr><th>Modelo</th><th>ROC-AUC reciente</th></tr>
-    <tr><td>Champion v3</td><td class="num">0,611</td></tr>
-    <tr class="win"><td>Challenger v4</td><td class="num">0,808</td></tr>
-  </table>
-  <br>
-  <p>Promover es una decisión humana: mover el alias y reiniciar los pods de forma gradual, sin reconstruir la imagen.</p>
-  <p class="demo"><b>Comando:</b> <code>kubectl rollout restart deployment/credit-api -n mlops</code></p>
+  <p class="lead">La alarma avisa, y el reentrenamiento se lanza con un comando. Entrena con los lotes 6 a 10 y compara con los lotes 11 y 12, que no usó.</p>
+  <div class="body c2">
+    <div id="retrain"></div>
+    <div class="stack">
+      <p>El challenger gana porque aprendió solo del comportamiento reciente. Mezclarlo con el histórico diluye la señal nueva.</p>
+      <div class="panel"><h3>Promover es una decisión humana</h3><p>Se mueve <code>@champion</code> y se reinician los pods. Hoy la v4 sigue como candidata, sin promover.</p></div>
+    </div>
+  </div>
+  <p class="cue"><b>COMANDO</b> &nbsp;<code>python src\retrain.py</code> &nbsp;·&nbsp; evidencia en <code>06_retrain_challenger.txt</code></p>
 </section>
 
-<section class="slide center">
-  <h1>Conclusión</h1>
-  <p class="sub">El modelo no termina al entrenarlo: se registra, se despliega, se vigila y se reemplaza sin detener el servicio.</p>
-  <p class="sub">¿Preguntas?</p>
+<section class="slide report" data-s="3">
+  <h2>UI y CI: el sistema se usa y se comprueba</h2>
+  <p class="lead">La interfaz consume la API desplegada, y GitHub revisa el proyecto en cada push.</p>
+  <div class="body c2">
+    <div class="panel stack">
+      <h3>UI en Streamlit</h3>
+      <ul>
+        <li>Corre como un pod más, en el puerto 30501.</li>
+        <li>Llama a <code>http://credit-api</code>, el nombre del Service.</li>
+        <li>Muestra probabilidad, decisión, versión y pod.</li>
+        <li>Un botón envía 30 peticiones y grafica el balanceo.</li>
+      </ul>
+    </div>
+    <div class="panel stack">
+      <h3>CI en GitHub Actions</h3>
+      <ul>
+        <li>Instala todo en una máquina limpia.</li>
+        <li>Comprueba que la separación de datos es reproducible.</li>
+        <li>Corre los 8 tests y el reporte de data drift.</li>
+        <li>Construye las 3 imágenes Docker.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-s="-1">
+  <h2>Lo que pedía el proyecto, y su evidencia</h2>
+  <table style="margin-top:12px">
+    <tr><th>Requisito</th><th>Resultado</th><th>Evidencia</th></tr>
+    <tr><td>Tracking y registro con alias</td><td>8 runs, 4 versiones, <code>@champion</code></td><td>MLflow</td></tr>
+    <tr><td>Servicio en Docker</td><td>3 imágenes; modelo consumido por alias</td><td class="m">Dockerfile</td></tr>
+    <tr><td>Kubernetes con ≥ 3 réplicas</td><td>3/3 en Running</td><td class="m">01_replicas</td></tr>
+    <tr><td>Balanceo de carga</td><td>30 peticiones entre 3 pods</td><td class="m">02_load_balancing</td></tr>
+    <tr><td>Self-healing</td><td>157 correctas, 0 fallidas</td><td class="m">03_self_healing</td></tr>
+    <tr><td>Escalado</td><td>3 → 5 → 3 réplicas</td><td class="m">04_scaling</td></tr>
+    <tr><td>Data drift y concept drift automáticos</td><td>Verde/rojo y alarma en el lote 9</td><td class="m">05_drift</td></tr>
+    <tr><td>UI que consume la API (extra)</td><td>Streamlit dentro del clúster</td><td class="m">ui/app.py</td></tr>
+  </table>
+  <p class="cap" style="margin-top:12px">Repositorio: <code>github.com/ajax708/MLOps</code></p>
+</section>
+
+<section class="slide dark" data-s="6">
+  <h1>Un modelo no termina al entrenarlo</h1>
+  <p class="sub">Se registra, se despliega, se vigila y se reemplaza sin detener el servicio.</p>
+  <p class="who">¿Preguntas?</p>
 </section>
 
 </main>
 <div id="count"></div>
 <script>
-  var stage = document.getElementById('stage');
-  var slides = document.querySelectorAll('.slide');
-  var count = document.getElementById('count');
-  var i = 0;
-  function start() {
-    var n = parseInt(location.hash.slice(1), 10);
-    return n >= 1 && n <= slides.length ? n - 1 : 0;
-  }
+(function () {
+  var C = { ink:'#0D1F2D', soft:'#4A5D6D', faint:'#7F92A1', line:'#DCE4EA', mist:'#F0F4F7', petrol:'#0B3C53', teal:'#0086A8', orange:'#C2570C', violet:'#6741D9', bad:'#B3261E' };
+  function $(id) { return document.getElementById(id); }
+  function es(v, d) { return v.toFixed(d).replace('.', ','); }
+  function scale(d0, d1, r0, r1) { return function (v) { return r0 + (v - d0) / (d1 - d0) * (r1 - r0); }; }
+  function t(x, y, s, cls, a, extra) { return '<text x="' + x + '" y="' + y + '" class="' + (cls || '') + '" text-anchor="' + (a || 'start') + '" ' + (extra || '') + '>' + s + '</text>'; }
+  function r(x, y, w, h, f, tip) { return '<rect x="' + x + '" y="' + y + '" width="' + Math.max(w, 0) + '" height="' + h + '" fill="' + f + '">' + (tip ? '<title>' + tip + '</title>' : '') + '</rect>'; }
+  function ln(x1, y1, x2, y2, c, w, dash) { return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + c + '" stroke-width="' + (w || 1) + '"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>'; }
+  function svg(w, h, body, label) { return '<svg viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="' + label + '">' + body + '</svg>'; }
+
+  /* Datos reales: MLflow y docs/evidence */
+  var runs = [
+    ['Random forest · 300 árboles', 0.7774, 'rf'], ['Random forest · 200 árboles', 0.7769, 'rf'], ['Random forest · 100 árboles', 0.7696, 'rf'],
+    ['Hist GB · learning rate 0,1', 0.7754, 'gb'], ['Hist GB · learning rate 0,03', 0.7753, 'gb'], ['Hist GB · learning rate 0,05', 0.7742, 'gb'],
+    ['Logística · C 0,1', 0.7558, 'lr'], ['Logística · C 1,0', 0.7550, 'lr']
+  ];
+  var psi = [['LIMIT_BAL',.7933],['AGE',.7647],['EDUCATION',.5556],['PAY_AMT1',.3933],['PAY_AMT2',.3409],['PAY_AMT3',.2093],['PAY_AMT5',.1702],['PAY_AMT6',.1563],['BILL_AMT1',.1554],['PAY_AMT4',.1533],['BILL_AMT2',.1461],['BILL_AMT3',.1330],['BILL_AMT4',.1320],['BILL_AMT5',.1233],['BILL_AMT6',.1203]];
+  var auc = [.7437,.7504,.8271,.7926,.8014,.7248,.6589,.6156,.6239,.6771,.6237,.5987];
+
+  /* Comparación de runs: puntos sobre un eje recortado, porque las diferencias son pequeñas */
+  (function () {
+    var W = 700, H = 392, L = 212, R = 66, T = 34, rowH = 37, x = scale(.75, .78, L, W - R), fam = { rf:[C.teal,'Random forest'], gb:[C.orange,'Hist GB'], lr:[C.violet,'Logística'] }, o = '', lx = L;
+    Object.keys(fam).forEach(function (k) { o += '<circle cx="' + (lx + 6) + '" cy="10" r="6" fill="' + fam[k][0] + '"/>' + t(lx + 17, 15, fam[k][1], 'lbl'); lx += fam[k][1].length * 7.4 + 42; });
+    [.75,.76,.77,.78].forEach(function (v) { o += ln(x(v), T, x(v), T + rowH * 8, C.line) + t(x(v), T + rowH * 8 + 18, es(v, 2), 'fnt', 'middle'); });
+    runs.forEach(function (d, i) {
+      var y = T + rowH * i + rowH / 2, c = fam[d[2]][0];
+      o += t(L - 14, y + 5, d[0], i === 0 ? 'disp' : 'lbl', 'end') + ln(x(.75), y, x(d[1]), y, c, 2);
+      o += '<circle cx="' + x(d[1]) + '" cy="' + y + '" r="' + (i === 0 ? 8 : 6) + '" fill="' + c + '" stroke="#fff" stroke-width="2"><title>' + d[0] + ': ' + es(d[1], 4) + '</title></circle>';
+      o += t(x(d[1]) + 13, y + 5, es(d[1], 4), i === 0 ? 'disp' : 'lbl');
+    });
+    o += t(L + (W - R - L) / 2, H - 4, 'ROC-AUC en test (eje recortado)', 'fnt', 'middle');
+    $('runs').innerHTML = svg(W, H, o, 'ROC-AUC de los 8 runs; el mejor es random forest con 0,7774');
+  })();
+
+  /* Escala de ROC-AUC */
+  (function () {
+    var W = 530, H = 90, x = scale(.5, 1, 24, W - 44), o = r(x(.5), 36, x(1) - x(.5), 8, C.line) + r(x(.5), 36, x(.777) - x(.5), 8, C.teal);
+    o += t(x(.5), 66, '0,5', 'disp', 'middle') + t(x(.5), 82, 'azar', 'fnt', 'middle') + t(x(1), 66, '1,0', 'disp', 'middle') + t(x(1), 82, 'perfecto', 'fnt', 'middle');
+    o += ln(x(.777), 26, x(.777), 52, C.petrol, 3) + t(x(.777), 18, '0,777 · nuestro modelo', 'disp', 'middle');
+    $('gauge').innerHTML = svg(W, H, o, 'ROC-AUC de 0,777 entre 0,5 azar y 1 perfecto');
+  })();
+
+  /* Balanceo: reparto real de 30 peticiones */
+  (function () {
+    var d = [['…4vf2g',18],['…sm7dv',8],['…q54gt',4]], W = 240, o = '', x = scale(0, 18, 0, 150);
+    d.forEach(function (v, i) { var y = i * 26; o += t(0, y + 15, v[0], 'mono') + r(64, y + 3, x(v[1]), 16, C.teal, v[0] + ': ' + v[1]) + t(70 + x(v[1]), y + 16, v[1], 'disp'); });
+    $('lb').innerHTML = svg(W, 80, o, 'Reparto de 30 peticiones: 18, 8 y 4');
+  })();
+
+  /* PSI por variable en el lote alterado */
+  (function () {
+    var W = 660, L = 96, R = 56, T = 26, rowH = 23, H = T + rowH * 15 + 26, x = scale(0, .8, L, W - R), o = '';
+    o += r(L, 6, 12, 12, C.orange) + t(L + 18, 17, 'Crítico (≥ 0,25)', 'lbl') + r(L + 158, 6, 12, 12, C.teal) + t(L + 176, 17, 'Drift (≥ 0,10)', 'lbl');
+    [0,.25,.5,.75].forEach(function (v) { o += ln(x(v), T, x(v), T + rowH * 15, C.line) + t(x(v), T + rowH * 15 + 17, es(v, 2), 'fnt', 'middle'); });
+    psi.forEach(function (d, i) {
+      var y = T + i * rowH;
+      o += t(L - 10, y + 16, d[0], 'mono', 'end') + r(L, y + 4, x(d[1]) - L, rowH - 8, d[1] >= .25 ? C.orange : C.teal, d[0] + ': PSI ' + es(d[1], 4));
+      if (i < 5) o += t(x(d[1]) + 6, y + 16, es(d[1], 2), 'lbl');
+    });
+    o += ln(x(.1), T, x(.1), T + rowH * 15, C.ink, 1.5, '4 3') + t(W - R + 40, T + rowH * 15 + 17, 'PSI', 'fnt', 'end');
+    $('psi').innerHTML = svg(W, H, o, 'PSI de las 15 variables con drift en el lote alterado');
+  })();
+
+  /* Concept drift: ROC-AUC por lote */
+  (function () {
+    var W = 680, H = 410, L = 52, R = 18, T = 18, B = 42, x = scale(1, 12, L + 8, W - R - 8), y = scale(.55, .85, H - B, T), o = '';
+    o += r((x(5) + x(6)) / 2, T, W - R - (x(5) + x(6)) / 2, H - B - T, C.mist) + t((x(5) + x(6)) / 2 + 8, T + 16, 'cambio simulado', 'fnt');
+    [.6,.7,.8].forEach(function (v) { o += ln(L, y(v), W - R, y(v), C.line) + t(L - 8, y(v) + 4, es(v, 1), 'fnt', 'end'); });
+    o += ln(L, y(.7774), W - R, y(.7774), C.faint, 1.5, '5 4') + t(L + 4, y(.7774) - 6, 'normal 0,777', 'fnt');
+    o += ln(L, y(.6993), W - R, y(.6993), C.bad, 2) + t(L + 4, y(.6993) + 16, 'umbral 0,70', 'lbl');
+    o += '<polyline fill="none" stroke="' + C.teal + '" stroke-width="2.5" points="' + auc.map(function (v, i) { return x(i + 1) + ',' + y(v); }).join(' ') + '"/>';
+    auc.forEach(function (v, i) {
+      o += '<circle cx="' + x(i + 1) + '" cy="' + y(v) + '" r="' + (i === 8 ? 9 : 5.5) + '" fill="' + (i === 8 ? C.bad : C.teal) + '" stroke="#fff" stroke-width="2"><title>Lote ' + (i + 1) + ': ' + es(v, 4) + '</title></circle>';
+      o += t(x(i + 1), H - B + 19, i + 1, 'fnt', 'middle');
+    });
+    o += t(x(9), y(auc[8]) + 28, 'alarma', 'disp', 'middle') + t(L + (W - L - R) / 2, H - 4, 'Lote', 'fnt', 'middle');
+    $('concept').innerHTML = svg(W, H, o, 'ROC-AUC por lote: cae desde el lote 6 y la alarma salta en el lote 9');
+  })();
+
+  /* Reentrenamiento: ROC-AUC en los lotes 11 y 12 */
+  (function () {
+    var d = [['Champion v3 (producción)',.6106,C.faint],['Histórico + reciente',.6836,C.faint],['Challenger v4 (solo reciente)',.8079,C.teal]], W = 530, H = 214, x = scale(0, 1, 0, W - 76), o = '';
+    d.forEach(function (v, i) { var y = i * 70; o += t(0, y + 16, v[0], i === 2 ? 'disp' : 'lbl') + r(0, y + 24, x(v[1]), 26, v[2], v[0] + ': ' + es(v[1], 3)) + t(x(v[1]) + 10, y + 43, es(v[1], 3), 'disp'); });
+    $('retrain').innerHTML = svg(W, H, o, 'ROC-AUC en lotes recientes: champion 0,611, mezcla 0,684, challenger 0,808');
+  })();
+
+  /* Arquitectura */
+  (function () {
+    function box(x, y, w, h, title, sub, fill, ink, m) { return r(x, y, w, h, fill) + t(x + 14, y + 26, title, 'disp', 'start', 'style="font-size:17px;fill:' + ink + '"') + (sub ? t(x + 14, y + 47, sub, m ? 'mono' : '', 'start', 'style="font-size:13.5px;fill:' + (ink === '#fff' ? '#C8DCE6' : C.soft) + '"') : ''); }
+    function arrow(x1, y1, x2, y2, c) { return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + (c || C.petrol) + '" stroke-width="2" marker-end="url(#ah)"/>'; }
+    var o = '<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="' + C.petrol + '"/></marker></defs>';
+    o += box(0, 66, 214, 96, 'Tu PC', 'train.py · register.py', C.mist, C.ink);
+    o += box(0, 262, 214, 96, 'Usuario', 'navegador o cliente', C.mist, C.ink);
+    o += '<rect x="280" y="0" width="856" height="432" fill="none" stroke="' + C.petrol + '" stroke-width="1.5" stroke-dasharray="6 4"/>' + t(296, 24, 'Clúster Kubernetes · namespace mlops', 'disp', 'start', 'style="font-size:15px;fill:' + C.petrol + '"');
+    o += box(310, 48, 300, 132, 'MLflow', 'tracking y Model Registry · :30500', C.petrol, '#fff');
+    o += r(324, 118, 272, 46, '#14536F') + t(338, 147, 'Disco persistente: modelos y runs', '', 'start', 'style="fill:#fff;font-size:14px"');
+    o += box(310, 262, 138, 96, 'UI', 'Streamlit · :30501', C.mist, C.ink);
+    o += box(478, 262, 132, 96, 'Service', 'credit-api · :30080', C.teal, '#fff');
+    o += r(690, 214, 410, 192, C.mist) + t(706, 240, 'Deployment credit-api · 3 réplicas', 'disp', 'start', 'style="font-size:15px;fill:' + C.petrol + '"');
+    ['Pod 1','Pod 2','Pod 3'].forEach(function (p, i) {
+      var x = 706 + i * 128;
+      o += r(x, 256, 118, 134, '#fff') + t(x + 12, 280, p, 'disp') + t(x + 12, 304, 'FastAPI', 'lbl') + r(x + 12, 318, 94, 54, C.petrol) + t(x + 59, 342, 'modelo', '', 'middle', 'style="fill:#fff;font-size:13px"') + t(x + 59, 360, 'en memoria', '', 'middle', 'style="fill:#fff;font-size:13px"');
+    });
+    o += arrow(214, 114, 308, 114) + t(246, 104, 'registra', 'fnt', 'middle');
+    o += arrow(214, 310, 308, 310);
+    o += arrow(448, 310, 476, 310);
+    o += arrow(610, 310, 688, 310) + t(649, 300, 'reparte', 'fnt', 'middle');
+    o += '<polyline fill="none" stroke="' + C.petrol + '" stroke-width="2" points="895,212 895,114 612,114" marker-end="url(#ah)"/>' + t(754, 104, 'al arrancar: ¿quién es @champion?', 'fnt', 'middle');
+    $('arch').innerHTML = svg(1152, 434, o, 'Arquitectura: PC, clúster con MLflow, UI, Service y 3 pods de la API');
+  })();
+
+  /* Riel del pipeline y numeración */
+  var names = ['Datos', 'Experimentos', 'Registro', 'Servicio', 'Kubernetes', 'Monitoreo'];
+  var all = [].slice.call(document.querySelectorAll('.slide'));
+  var deck = all.filter(function (s) { return !s.classList.contains('report'); });
+  all.forEach(function (s, k) {
+    var st = +s.dataset.s, h = '<div class="rail">';
+    names.forEach(function (n, i) { h += '<span class="' + (i === st ? 'now' : i < st ? 'done' : '') + '">' + n + '</span>'; });
+    var d = deck.indexOf(s);
+    h += '<div class="pg" data-n="' + (d + 1) + '" data-p="' + (k + 1) + '"></div></div>';
+    s.insertAdjacentHTML('afterbegin', h);
+  });
+
+  var stage = $('stage'), count = $('count'), i = 0;
   function show(n) {
-    i = Math.max(0, Math.min(slides.length - 1, n));
-    slides.forEach(function (s, k) { s.classList.toggle('on', k === i); });
-    count.textContent = (i + 1) + ' / ' + slides.length;
-    history.replaceState(null, '', '#' + (i + 1));
+    i = Math.max(0, Math.min(deck.length - 1, n));
+    deck.forEach(function (s, k) { s.classList.toggle('on', k === i); });
+    count.textContent = (i + 1) + ' / ' + deck.length;
+    try { history.replaceState(null, '', '#' + (i + 1)); } catch (e) {}
   }
   function fit() {
     var s = Math.min(innerWidth / 1280, innerHeight / 720);
@@ -276,13 +598,15 @@ memory: 768Mi             # requests = limits</pre>
     if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].indexOf(e.key) > -1) { e.preventDefault(); show(i + 1); }
     else if (['ArrowLeft', 'ArrowUp', 'PageUp'].indexOf(e.key) > -1) { e.preventDefault(); show(i - 1); }
     else if (e.key === 'Home') show(0);
-    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key === 'End') show(deck.length - 1);
     else if (e.key === 'f' || e.key === 'F') {
       if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen();
     }
   });
   stage.addEventListener('click', function (e) { show(i + (e.clientX < innerWidth * 0.25 ? -1 : 1)); });
-  fit(); show(start());
+  var start = parseInt(location.hash.slice(1), 10);
+  fit(); show(start >= 1 && start <= deck.length ? start - 1 : 0);
+})();
 </script>
 </body>
 </html>
